@@ -1,14 +1,8 @@
-//
-// Created by 戴文勋 on 2021/7/7.
-//
-
-#ifndef C_COMPILER_DEFS_H
-#define C_COMPILER_DEFS_H
-
-#endif //C_COMPILER_DEFS_H
+#include <stdlib.h>
+#include <stdio.h>
 
 enum {
-    T_PLUS, T_MINUS, T_STAR, T_INTLIT
+    T_PLUS, T_MINUS, T_STAR, T_SLASH, T_INTLIT
 };
 
 struct token {

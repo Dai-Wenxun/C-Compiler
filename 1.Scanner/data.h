@@ -1,8 +1,12 @@
-//
-// Created by 戴文勋 on 2021/7/7.
-//
+#ifndef extern_
+#define extern_ extern
+#endif
 
-#ifndef C_COMPILER_DATA_H
-#define C_COMPILER_DATA_H
+extern_ int Line;
+extern_ int	Putback;
+extern_ FILE *Infile;
 
-#endif //C_COMPILER_DATA_H
+
+int Line;
+int	Putback;
+FILE *Infile;
