@@ -1,13 +1,13 @@
 #include "defs.h"
 #include "data.h"
+#include "decl.h"
 
 static int chrpos(char *s, int c) {
     char *p;
+
     p = strchr(s, c);
-
-    return (p ? p-s : -1)
+    return p ? p-s : -1;
 }
-
 
 static int next(void) {
     int c;
@@ -19,7 +19,7 @@ static int next(void) {
     }
 
     c = getc(Infile);
-    if ('\n' == c)
+    if (c == '\n')
         Line++;
 
     return c;
@@ -28,11 +28,13 @@ static int next(void) {
 static void putback(int c) {
     Putback = c;
 }
+
 static int skip(void) {
     int c;
+
     c = next();
 
-    while (' ' == c || '\t' == c || '\n' == c || 'r' == c || '\f' == c) {
+    while (' ' == c || '\t' == c || '\n' == c || '\f' == c || '\r' == c) {
         c = next();
     }
 
@@ -43,15 +45,13 @@ static int scanint(int c) {
     int k, val = 0;
 
     while ((k = chrpos("0123456789", c)) >= 0) {
-        val = val * 10 + k;
+        val = 10 * val + k;
         c = next();
     }
 
     putback(c);
     return val;
 }
-
-
 
 int scan(struct token *t) {
     int c;
