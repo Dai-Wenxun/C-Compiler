@@ -79,7 +79,7 @@ int cgadd(int r1, int r2) {
 
 int cgsub(int r1, int r2) {
     fprintf(Outfile, "\tsubq\t%s, %s\n", reglist[r2], reglist[r1]);
-    free_register(r1);
+    free_register(r2);
     return r1;
 }
 
