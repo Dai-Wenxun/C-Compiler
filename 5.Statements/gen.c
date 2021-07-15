@@ -27,15 +27,19 @@ static int genAST(struct ASTnode *n) {
     }
 }
 
-
-
-
-void generatecode(struct ASTnode *n) {
-    int reg;
-
+void genpreamble() {
     cgpreamble();
-    reg = genAST(n);
-    cgprintint(reg);
+}
+
+void genpostamble() {
     cgpostamble();
+}
+
+void genfreeregs() {
+    freeall_registers();
+}
+
+void genorintint(int reg) {
+    cgprintint(reg);
 }
 
