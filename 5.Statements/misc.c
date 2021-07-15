@@ -1,5 +1,5 @@
-#include "data.h"
 #include "defs.h"
+#include "data.h"
 #include "decl.h"
 
 void match(int t, char *what) {

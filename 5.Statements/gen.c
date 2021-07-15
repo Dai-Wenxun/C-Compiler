@@ -1,8 +1,8 @@
 #include "defs.h"
-#include "decl.h"
 #include "data.h"
+#include "decl.h"
 
-static int genAST(struct ASTnode *n) {
+int genAST(struct ASTnode *n) {
     int leftreg, rightreg;
 
     if (n->left)
@@ -39,7 +39,7 @@ void genfreeregs() {
     freeall_registers();
 }
 
-void genorintint(int reg) {
+void genprintint(int reg) {
     cgprintint(reg);
 }
 

@@ -1,6 +1,6 @@
-#include "decl.h"
 #include "defs.h"
 #include "data.h"
+#include "decl.h"
 
 void statements(void) {
     struct ASTnode *tree;
