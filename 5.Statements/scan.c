@@ -79,6 +79,7 @@ static int keyword(char *s) {
             break;
 
     }
+    return 0; 
 }
 
 int scan(struct token *t) {
