@@ -33,6 +33,12 @@ void assignment_statement(void) {
     match(T_EQUALS, "=");
 
     left = binexpr(0);
+
+    tree = mkastnode(A_ASSIGN, left, right, 0);
+
+    genAST(tree, -1);
+    genfreeregs();
+    semi();
 }
 
 void statements(void) {

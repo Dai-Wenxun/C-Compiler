@@ -23,6 +23,10 @@ int genAST(struct ASTnode *n, int reg) {
             return cgloadint(n->v.intvalue);
         case A_IDENT:
             return cgloadglob(Gsym[n->v.id].name);
+        case A_LVIDENT:
+            return cgstorglob(reg, Gsym[n->v.id].name);
+        case A_ASSIGN:
+            return rightreg;
         default:
             fprintf(stderr, "Unknown AST operator %d\n", n->op);
             exit(1);

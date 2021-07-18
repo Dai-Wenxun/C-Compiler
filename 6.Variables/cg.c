@@ -22,8 +22,6 @@ static int alloc_register(void) {
 static void free_register(int reg) {
     if (freereg[reg] != 0) {
         fatald("Error trying to free register", reg);
-        fprintf(stderr, "Error trying to free register %d\n", reg);
-        exit(1);
     }
     freereg[reg] = 1;
 }
@@ -72,6 +70,13 @@ int cgloadint(int value) {
     return r;
 }
 
+int cgloadglob(char *identifier) {
+    int r = alloc_register();
+
+    fprintf(Outfile, "\tmovq\t%s(%%rip), %s\n", identifier, reglist[r]);
+    return r;
+}
+
 int cgadd(int r1, int r2) {
     fprintf(Outfile, "\taddq\t%s, %s\n", reglist[r1], reglist[r2]);
     free_register(r1);
@@ -106,7 +111,7 @@ void cgprintint(int r) {
 }
 
 int cgstorglob(int r, char *identifier) {
-    fprintf(Outfile, "\tmovq\t%s, %s(\%%rip)\n", reglist[r], identifier);
+    fprintf(Outfile, "\tmovq\t%s, %s(%%rip)\n", reglist[r], identifier);
     return r;
 }
 

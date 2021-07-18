@@ -23,7 +23,7 @@ struct token {
 // AST node types
 enum {
     A_ADD, A_SUBTRACT, A_MULTIPLY, A_DIVIDE, A_INTLIT,
-    A_IDENT, A_LVIDENT,
+    A_IDENT, A_LVIDENT, A_ASSIGN
 };
 
 // Abstract Syntax Tree structure
