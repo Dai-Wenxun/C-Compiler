@@ -28,8 +28,7 @@ int genAST(struct ASTnode *n, int reg) {
         case A_ASSIGN:
             return rightreg;
         default:
-            fprintf(stderr, "Unknown AST operator %d\n", n->op);
-            exit(1);
+			fatald("Unknown AST operator", n->op);
     }
 }
 

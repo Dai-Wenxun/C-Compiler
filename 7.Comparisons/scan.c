@@ -139,6 +139,7 @@ int scan(struct token *t) {
                 putback(c);
                 t->token = T_GT;
             }
+            break;
         default:
             if (isdigit(c)) {
                 t->intvalue = scanint(c);
