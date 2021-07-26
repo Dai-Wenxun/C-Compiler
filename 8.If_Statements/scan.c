@@ -165,6 +165,5 @@ int scan(struct token *t) {
 
             fatalc("Unrecognised character", c);
     }
-
     return 1;
 }
