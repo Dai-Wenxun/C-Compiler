@@ -1,4 +1,4 @@
 CMakeLists.txt
-.idea
-cmake-build-debug
-master
+/.idea
+/cmake-build-debug
+/master
