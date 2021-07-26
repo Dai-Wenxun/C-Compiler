@@ -10,6 +10,10 @@ void match(int t, char *what) {
     }
 }
 
+void ident(void) {
+    match(T_IDENT, "identifier");
+}
+
 void semi(void) {
     match(T_SEMI, ";");
 }
@@ -28,10 +32,6 @@ void lparen(void) {
 
 void rparen(void) {
     match(T_RPAREN, ")");
-}
-
-void ident(void) {
-    match(T_IDENT, "identifier");
 }
 
 void fatal(char *s) {
