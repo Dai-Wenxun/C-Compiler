@@ -1,6 +1,6 @@
-#include "defs.h"
-#include "data.h"
-#include "decl.h"
+#include "../defs.h"
+#include "../data.h"
+#include "../decl.h"
 
 static int chrpos(char *s, int c) {
     char *p;
@@ -114,6 +114,16 @@ int scan(struct token *t) {
         case ';':
             t->token = T_SEMI;
             break;
+        case '{':
+            t->token = T_LBRACE;
+            break;
+        case '}':
+            t->token = T_RBRACE;
+            break;
+        case '(':
+            t->token = T_LPAREN;
+        case ')':
+            t->token = T_RPAREN;
         case '=':
             if ((c=next()) == '=') {
                 t->token = T_EQ;
