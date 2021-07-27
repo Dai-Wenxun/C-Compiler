@@ -1,1 +1,1 @@
-My journey of implementing a C compiler.
+可自举的SubC编译器
