@@ -128,7 +128,7 @@ struct ASTnode *compound_statement(void) {
 
         tree = single_statement();
 
-        if (tree != NULL && (tree->op == A_PRINT || tree->op == T_ASSIGN))
+        if (tree != NULL && (tree->op == A_PRINT || tree->op == A_ASSIGN))
             semi();
 
         if (tree != NULL) {
