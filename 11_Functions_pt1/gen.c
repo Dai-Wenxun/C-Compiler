@@ -7,7 +7,7 @@ static int label(void) {
     return id++;
 }
 
-static int genIFAST(struct ASTnode *n) {
+static int genIF(struct ASTnode *n) {
     int Lfalse, Lend;
 
     Lfalse = label();
@@ -59,7 +59,7 @@ int genAST(struct ASTnode *n, int reg, int parentASTop) {
 
     switch (n->op) {
         case A_IF:
-            return genIFAST(n);
+            return genIF(n);
         case A_WHILE:
             return genWHILE(n);
         case A_GLUE:
