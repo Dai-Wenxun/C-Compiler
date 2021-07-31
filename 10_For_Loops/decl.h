@@ -35,7 +35,7 @@ void cglabel(int l);
 void cgjump(int l);
 
 // expr.c
-struct ASTnode *binexpr(int rbp);
+struct ASTnode *binexpr(int ptp);
 
 // stmt.c
 struct ASTnode *compound_statement(void);

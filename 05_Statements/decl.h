@@ -8,7 +8,7 @@ struct ASTnode *mkastleaf(int op, int intvalue);
 struct ASTnode *mkastunary(int op, struct ASTnode *left, int intvalue);
 
 //expr.c
-struct ASTnode *binexpr(int rbp);
+struct ASTnode *binexpr(int ptp);
 
 // gen.c
 int genAST(struct ASTnode *n);

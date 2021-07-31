@@ -38,7 +38,7 @@ void cgjump(int l);
 int cgwiden(int r, int oldtype, int newtype);
 
 // expr.c
-struct ASTnode *binexpr(int rbp);
+struct ASTnode *binexpr(int ptp);
 
 // stmt.c
 struct ASTnode *compound_statement(void);
