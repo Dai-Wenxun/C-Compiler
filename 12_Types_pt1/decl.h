@@ -12,7 +12,6 @@ struct ASTnode *mkastunary(int op, int type, struct ASTnode *left, int intvalue)
 // gen.c
 int genAST(struct ASTnode *n, int reg, int parentASTop);
 void genpreamble();
-void genpostamble();
 void genfreeregs();
 void genprintint(int reg);
 void genglobsym(int id);
