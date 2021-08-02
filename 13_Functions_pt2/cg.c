@@ -146,7 +146,7 @@ int cgstorglob(int r, int id) {
                     reglist[r], Gsym[id].name);
             break;
         default:
-            fatald("Bad type in cgloadglob:", Gsym[id].type);
+            fatald("Bad type in cgstorglob:", Gsym[id].type);
     }
     return (r);
 }
