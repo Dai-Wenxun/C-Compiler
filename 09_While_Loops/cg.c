@@ -146,7 +146,7 @@ static char *invcmplist[] = {"jne", "je", "jge", "jle", "jg", "jl"};
 
 int cgcompare_and_jump(int ASTop, int r1, int r2, int label) {
     if (ASTop < A_EQ || ASTop > A_GE)
-        fatal("Bad ASTop in cgcompare_and_set()");
+        fatal("Bad ASTop in cgcompare_and_jump()");
 
     fprintf(Outfile, "\tcmpq\t%s, %s\n", reglist[r2], reglist[r1]);
     fprintf(Outfile, "\t%s\tL%d\n", invcmplist[ASTop - A_EQ], label);

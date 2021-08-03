@@ -58,7 +58,7 @@ static char *invcmplist[] =
 
 int cgcompare_and_jump(int ASTop, int r1, int r2, int label) {
     if (ASTop < A_EQ || ASTop > A_GE)
-        fatal("Bad ASTop in cgcompare_and_set()");
+        fatal("Bad ASTop in cgcompare_and_jump()");
 
     fprintf(Outfile, "\tcmpq\t%s, %s\n", reglist[r2], reglist[r1]);
     fprintf(Outfile, "\t%s\tL%d\n", invcmplist[ASTop - A_EQ], label);
@@ -131,7 +131,7 @@ int cgloadglob(int id) {
             fprintf(Outfile, "\tmovq\t%s(%%rip), %s\n", Gsym[id].name, reglist[r]);
             break;
         default:
-            fatald("Bad type in cgloadglob:", Gsym[id].type);
+            fatald("Bad type in cgloadglob()", Gsym[id].type);
     }
     return (r);
 }
@@ -154,7 +154,7 @@ int cgstorglob(int r, int id) {
                     reglist[r], Gsym[id].name);
             break;
         default:
-            fatald("Bad type in cgstorglob:", Gsym[id].type);
+            fatald("Bad type in cgstorglob()", Gsym[id].type);
     }
     return (r);
 }
@@ -181,7 +181,7 @@ void cgreturn(int r, int id) {
             fprintf(Outfile, "\tmovq\t%s, %%rax\n", reglist[r]);
             break;
         default:
-            fatald("Bad function type in cgreturn:", Gsym[id].type);
+            fatald("Bad function type in cgreturn()", Gsym[id].type);
     }
     cgjump(Gsym[id].endlabel);
 }
