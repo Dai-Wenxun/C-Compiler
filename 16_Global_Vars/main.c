@@ -16,7 +16,6 @@ static void usage(char *prog) {
 }
 
 int main(int argc, char* argv[]) {
-    struct ASTnode *tree;
 
     if (argc != 2)
         usage(argv[0]);
