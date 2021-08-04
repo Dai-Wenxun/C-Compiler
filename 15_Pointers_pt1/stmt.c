@@ -7,7 +7,6 @@ static struct ASTnode *single_statement(void);
 static struct ASTnode *print_statement(void) {
     struct ASTnode *tree;
     int lefttype, righttype;
-    int reg;
 
     // scan in the next token
     match(T_PRINT, "print");

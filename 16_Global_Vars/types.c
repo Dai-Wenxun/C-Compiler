@@ -78,7 +78,7 @@ int pointer_to(int type) {
             newtype = P_LONGPTR;
             break;
         default:
-            fatald("Unrecognised in pointer_to: type", type);
+            fatald("Unrecognised in pointer_to(): type", type);
     }
     return (newtype);
 }
@@ -99,7 +99,7 @@ int value_at(int type) {
             newtype = P_LONG;
             break;
         default:
-            fatald("Unrecognised in value_at: type", type);
+            fatald("Unrecognised in value_at(): type", type);
     }
     return (newtype);
 }

@@ -4,7 +4,6 @@
 
 static struct ASTnode *print_statement(void) {
     struct ASTnode *tree;
-    int reg;
 
     // scan in the next token
     match(T_PRINT, "print");

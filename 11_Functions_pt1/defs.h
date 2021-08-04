@@ -44,8 +44,8 @@ struct ASTnode {
     struct ASTnode *mid;
     struct ASTnode *right;
     union {
-        int intvalue;   // For A_INTLIT
-        int id;         // For A_IDENT
+        int intvalue;
+        int id;
     }v;
 };
 
