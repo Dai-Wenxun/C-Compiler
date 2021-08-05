@@ -151,8 +151,10 @@ struct ASTnode *binexpr(int ptp) {
         left = mkastnode(binastop(tokentype), left->type, left, NULL, right, 0);
 
         tokentype = Token.token;
-        if (tokentype == T_SEMI || tokentype == T_RPAREN)
+        if (tokentype == T_SEMI || tokentype == T_RPAREN) {
             left->rvalue = 1; return (left);
+        }
+
     }
 
     left->rvalue= 1; return (left);
