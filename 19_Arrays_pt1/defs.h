@@ -36,14 +36,14 @@ struct token {
 enum {
     A_ASSIGN=1,
     A_EQ, A_NE,
-    A_LT, A_GT, A_LE, A_GE, //7
-    A_ADD, A_SUBTRACT,     //9
-    A_MULTIPLY, A_DIVIDE, //11
+    A_LT, A_GT, A_LE, A_GE,
+    A_ADD, A_SUBTRACT,
+    A_MULTIPLY, A_DIVIDE,
     //
-    A_IF, A_WHILE, A_GLUE, A_FUNCTION, //15
+    A_IF, A_WHILE, A_GLUE, A_FUNCTION,
     //
-    A_INTLIT, A_IDENT, A_WIDEN, A_RETURN, //19
-    A_FUNCCALL, A_ADDR, A_DEREF, A_SCALE  //23
+    A_INTLIT, A_IDENT, A_WIDEN, A_RETURN,
+    A_FUNCCALL, A_ADDR, A_DEREF, A_SCALE
 };
 
 // Primitive types

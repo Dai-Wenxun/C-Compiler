@@ -44,7 +44,6 @@ static struct ASTnode *array_access(void) {
     return (left);
 }
 
-
 static struct ASTnode *primary(void) {
     struct ASTnode *n;
     int id;
