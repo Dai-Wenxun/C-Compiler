@@ -1,1 +1,1 @@
-可自举SubC编译器
+Tiny self hosting C compiler
