@@ -100,3 +100,8 @@ int findsymbol(char *s) {
         slot = findglob(s);
     return (slot);
 }
+
+void clear_symtable(void) {
+    Globs = 0;
+    Locls = NSYMBOLS - 1;
+}
