@@ -6,6 +6,11 @@
 #define TEXTLEN 512
 #define NSYMBOLS 1024
 
+
+#define AOUT "a.out"
+#define ASCMD "as -o"
+#define LDCMD "cc -o"
+
 // Token types
 enum {
   T_EOF,
