@@ -87,6 +87,7 @@ static struct ASTnode *return_statement(void) {
     tree = mkastunary(A_RETURN, P_NONE, tree, 0);
 
     rparen();
+    semi();
     return (tree);
 }
 
@@ -124,8 +125,7 @@ struct ASTnode *compound_statement(void) {
 
         tree = single_statement();
 
-        if (tree != NULL && (tree->op == A_ASSIGN ||
-                             tree->op == A_RETURN || tree->op == A_FUNCCALL))
+        if (tree != NULL && (tree->op == A_ASSIGN || tree->op == A_FUNCCALL))
             semi();
 
         if (tree != NULL) {

@@ -10,7 +10,7 @@ void var_declaration(int type, int class) {
             if (class == C_LOCAL) {
                 fatal("For now, declaration of local arrays is not implemented");
             } else {
-                addglob(Text, pointer_to(type), S_ARRAY, class, 0, Token.intvalue);
+                addglob(Text, pointer_to(type), S_ARRAY, class, Token.intvalue);
             }
         }
 
@@ -22,7 +22,7 @@ void var_declaration(int type, int class) {
             if (addlocl(Text, type, S_VARIABLE, class, 1) == -1)
                 fatals("Duplicate local variable declaration", Text);
         } else {
-            addglob(Text, type, S_VARIABLE, class, 0, 1);
+            addglob(Text, type, S_VARIABLE, class, 1);
         }
     }
 
@@ -43,7 +43,7 @@ static int param_declaration(int id) {
         ident();
 
         if (param_id) {
-            if (type != Symtable[id].type)
+            if (type != Symtable[param_id].type)
                 fatald("Type doesn't match prototype for parameter", paramcnt + 1);
             param_id++;
         } else {
@@ -80,7 +80,7 @@ struct ASTnode *function_declaration(int type) {
 
     if (id == -1) {
         endlabel = genlabel();
-        nameslot = addglob(Text, type, S_FUNCTION, C_GLOBAL, endlabel, 0);
+        nameslot = addglob(Text, type, S_FUNCTION, C_GLOBAL, endlabel);
     }
 
     lparen();

@@ -5,7 +5,6 @@
 #include "decl.h"
 #include <unistd.h>
 
-
 char *alter_suffix(char *str, char suffix) {
     char *posn;
     char *newstr;
@@ -13,7 +12,7 @@ char *alter_suffix(char *str, char suffix) {
     if ((newstr = strdup(str)) == NULL)
         return (NULL);
 
-    if ((posn = strchr(newstr, '.')) == NULL)
+    if ((posn = strrchr(newstr, '.')) == NULL)
         return (NULL);
 
     posn++;
@@ -106,7 +105,6 @@ void do_link(char *outfilename, char *objlist[]) {
         exit(1);
     }
 }
-
 
 static void usage(char *prog) {
     fprintf(stderr, "Usage: %s [-vcST] [-o outfile] file [file ...]\n", prog);
