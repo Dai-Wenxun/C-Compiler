@@ -88,35 +88,33 @@ static int scanint(int c) {
     return (val);
 }
 
-static int scanstr(char *buf) {
+static void scanstr(void) {
     int i, c;
 
-    for (i = 0; i < TEXTLEN - 1; i++) {
+    for (i = 0; i < TEXTLEN + 1; i++) {
         if ((c = scanch()) == '\"') {
-            buf[i] = '\0';
-            return (i);
+            Text[i] = '\0';
+            return;
         }
-        buf[i] = (char)c;
+        Text[i] = (char)c;
     }
     fatal("String literal too long");
-    return (0);
 }
 
-static int scanident(int c, char *buf, int lim) {
+static void scanident(int c) {
     int i = 0;
 
     while (isalpha(c) || isdigit(c) || '_' == c) {
-        if (lim - 1 == i) {
+        if (TEXTLEN == i) {
             fatal("identifier too long");
-        } else if (i < lim - 1) {
-            buf[i++] = (char)c;
+        } else if (i < TEXTLEN) {
+            Text[i++] = (char)c;
         }
         c = next();
     }
 
     putback(c);
-    buf[i] = '\0';
-    return (i);
+    Text[i] = '\0';
 }
 
 static int keyword(char *s) {
@@ -159,22 +157,9 @@ static int keyword(char *s) {
     return (0);
 }
 
-static struct token *Rejtoken = NULL;
-
-void reject_token(struct token *t) {
-    if (Rejtoken != NULL)
-        fatal("Can't reject token twice");
-    Rejtoken = t;
-}
 
 int scan(struct token *t) {
     int c, tokentype;
-
-    if (Rejtoken != NULL) {
-        t = Rejtoken;
-        Rejtoken = NULL;
-        return (1);
-    }
 
     c = skip();
 
@@ -293,7 +278,7 @@ int scan(struct token *t) {
                 fatal("Expected '\'' at end of char literal");
             break;
         case '\"':
-            scanstr(Text);
+            scanstr();
             t->token = T_STRLIT;
             break;
         default:
@@ -302,7 +287,7 @@ int scan(struct token *t) {
                 t->token = T_INTLIT;
                 break;
             } else if (isalpha(c) || '_' == c) {
-                scanident(c, Text, TEXTLEN);
+                scanident(c);
 
                 tokentype = keyword(Text);
                 if (tokentype) {
