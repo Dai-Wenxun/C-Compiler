@@ -62,15 +62,15 @@ static int gen_funccall(struct ASTnode *n) {
     while (gluetree) {
         reg = genAST(gluetree->right, NOLABEL, gluetree->op);
 
-        cgcopyarg(reg, gluetree->v.size);
+        cgcopyarg(reg, gluetree->size);
 
         if (numargs == 0)
-            numargs = gluetree->v.size;
+            numargs = gluetree->size;
         genfreeregs();
         gluetree = gluetree->left;
     }
 
-    return (cgcall(n->v.id, numargs));
+    return (cgcall(n->id, numargs));
 }
 
 int genAST(struct ASTnode *n, int label, int parentASTop) {
@@ -90,9 +90,9 @@ int genAST(struct ASTnode *n, int label, int parentASTop) {
             genfreeregs();
             return (NOREG);
         case A_FUNCTION:
-            cgfuncpreamble(n->v.id);
+            cgfuncpreamble(n->id);
             genAST(n->left, NOLABEL, n->op);
-            cgfuncpostamble(n->v.id);
+            cgfuncpostamble(n->id);
             return (NOREG);
     }
 
@@ -105,10 +105,10 @@ int genAST(struct ASTnode *n, int label, int parentASTop) {
         case A_ASSIGN:
             switch (n->right->op) {
                 case A_IDENT:
-                    if (Symtable[n->right->v.id].class == C_GLOBAL) {
-                        return (cgstorglob(leftreg, n->right->v.id));
+                    if (Symtable[n->right->id].class == C_GLOBAL) {
+                        return (cgstorglob(leftreg, n->right->id));
                     } else {
-                        return (cgstorlocal(leftreg, n->right->v.id));
+                        return (cgstorlocal(leftreg, n->right->id));
                     }
                 case A_DEREF:
                     return (cgstorderef(leftreg, rightreg, n->right->type));
@@ -145,23 +145,23 @@ int genAST(struct ASTnode *n, int label, int parentASTop) {
         case A_DIVIDE:
             return (cgdiv(leftreg, rightreg));
         case A_INTLIT:
-            return (cgloadint(n->v.intvalue, n->type));
+            return (cgloadint(n->intvalue, n->type));
         case A_STRLIT:
-            return (cgloadglobstr(n->v.id));
+            return (cgloadglobstr(n->id));
         case A_IDENT:
             if (n->rvalue || parentASTop == A_DEREF) {
-                if (Symtable[n->v.id].class == C_GLOBAL)
-                    return (cgloadglob(n->v.id, n->op));
+                if (Symtable[n->id].class == C_GLOBAL)
+                    return (cgloadglob(n->id, n->op));
                 else
-                    return (cgloadlocal(n->v.id, n->op));
+                    return (cgloadlocal(n->id, n->op));
             } else
                 return (NOREG);
         case A_PREINC:
         case A_PREDEC:
-            return (cgloadglob(n->left->v.id, n->op));
+            return (cgloadglob(n->left->id, n->op));
         case A_POSTINC:
         case A_POSTDEC:
-            return (cgloadglob(n->v.id, n->op));
+            return (cgloadglob(n->id, n->op));
         case A_NEGATE:
             return (cgnegate(leftreg));
         case A_INVERT:
@@ -174,21 +174,21 @@ int genAST(struct ASTnode *n, int label, int parentASTop) {
             cgreturn(leftreg, Functionid);
             return (NOREG);
         case A_ADDR:
-            return (cgaddress(n->v.id));
+            return (cgaddress(n->id));
         case A_DEREF:
-            if (n->rvalue)
-                return (cgderef(leftreg, n->left->type));
+            if (n->rvalue || parentASTop == A_DEREF)
+                return (cgderef(leftreg, n->type));
             else
                 return (leftreg);
         case A_WIDEN:
             return (cgwiden(leftreg, n->left->type, n->type));
         case A_SCALE:
-            switch (n->v.size) {
+            switch (n->size) {
                 case 2: return (cgshlconst(leftreg, 1));
                 case 4: return (cgshlconst(leftreg, 2));
                 case 8: return (cgshlconst(leftreg, 3));
                 default:
-                    rightreg = cgloadint(n->v.size, P_INT);
+                    rightreg = cgloadint(n->size, P_INT);
                     return (cgmul(leftreg, rightreg));
             }
         default:

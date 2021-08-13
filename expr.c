@@ -117,7 +117,7 @@ static struct ASTnode *primary(void) {
 
         case T_STRLIT:
             id = genglobstr(Text);
-            n = mkastleaf(A_STRLIT, P_CHARPTR, id);
+            n = mkastleaf(A_STRLIT, pointer_to(P_CHAR), id);
             break;
 
         case T_IDENT:
