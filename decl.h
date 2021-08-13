@@ -1,5 +1,4 @@
 // scan.c
-void reject_token(struct token *t);
 int scan(struct token *t);
 
 
@@ -21,7 +20,6 @@ void genfreeregs(void);
 void genglobsym(int id);
 int genglobstr(char *strvalue);
 int genprimsize(int type);
-void genreturn(int r, int id);
 
 // cg.c
 void cgtextseg(void);
@@ -90,8 +88,8 @@ int findglob(char *s);
 int findlocl(char *s);
 int findsymbol(char *s);
 void copyfuncparams(int slot);
-int addglob(char *name, int type, int stype, int class, int endlabel, int size);
-int addlocl(char *name, int type, int stype, int isparam, int size);
+int addglob(char *name, int type, int stype, int class, int size);
+int addlocl(char *name, int type, int stype, int class, int size);
 void freeloclsyms(void);
 void clear_symtable(void);
 
@@ -102,6 +100,7 @@ void global_declarations(void);
 
 // types.c
 int inttype(int type);
+int ptrtype(int type);
 int parse_type(void);
 int pointer_to(int type);
 int value_at(int type);

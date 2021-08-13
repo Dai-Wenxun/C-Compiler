@@ -44,24 +44,23 @@ void freeloclsyms(void) {
 }
 
 static void updatesym(int slot, char *name, int type, int stype,
-                    int class, int endlabel, int size, int posn) {
+                    int class, int size, int posn) {
     Symtable[slot].name = strdup(name);
     Symtable[slot].type = type;
     Symtable[slot].stype = stype;
     Symtable[slot].class = class;
-    Symtable[slot].endlabel = endlabel;
     Symtable[slot].size = size;
     Symtable[slot].posn = posn;
 }
 
-int addglob(char *name, int type, int stype, int class, int endlabel, int size) {
+int addglob(char *name, int type, int stype, int class, int size) {
     int slot;
 
     if ((slot = findglob(name)) != -1)
         return (slot);
 
     slot = newglob();
-    updatesym(slot, name, type, stype, class, endlabel, size, 0);
+    updatesym(slot, name, type, stype, class, size, 0);
 
     if (class == C_GLOBAL)
         genglobsym(slot);
@@ -77,7 +76,7 @@ int addlocl(char *name, int type, int stype, int class, int size) {
 
     slot = newlocl();
 
-    updatesym(slot, name, type, stype, class, 0, size, 0);
+    updatesym(slot, name, type, stype, class, size, 0);
     return (slot);
 }
 
