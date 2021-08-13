@@ -103,70 +103,71 @@ void cgfuncpreamble(int id) {
     }
 
     stackOffset = (localOffset + 15) & ~15;
-    fprintf(Outfile, "\taddq\t$%d, %%rsp\n", -stackOffset);
+    if (stackOffset)
+        fprintf(Outfile, "\taddq\t$%d, %%rsp\n", -stackOffset);
 }
 
 void cgfuncpostamble(int id) {
     cglabel(Symtable[id].endlabel);
-    fprintf(Outfile, "\taddq\t$%d, %%rsp\n", stackOffset);
+    if (stackOffset)
+        fprintf(Outfile, "\taddq\t$%d, %%rsp\n", stackOffset);
     fputs("\tpopq\t%rbp\n\tret\n", Outfile);
 }
 
 int cgstorlocal(int r, int id) {
-    switch (Symtable[id].type) {
-        case P_CHAR:
-            fprintf(Outfile, "\tmovb\t%s, %d(%%rbp)\n",
-                    breglist[r], Symtable[id].posn);
-            break;
-        case P_INT:
-            fprintf(Outfile, "\tmovl\t%s, %d(%%rbp)\n",
-                    dreglist[r], Symtable[id].posn);
-            break;
-        case P_LONG:
-        case P_CHARPTR:
-        case P_INTPTR:
-        case P_LONGPTR:
-            fprintf(Outfile, "\tmovq\t%s, %d(%%rbp)\n",
-                    reglist[r], Symtable[id].posn);
-            break;
-        default:
-            fatald("Bad type in cgstorlocal()", Symtable[id].type);
+    if (cgprimsize(Symtable[id].type) == 8) {
+        fprintf(Outfile, "\tmovq\t%s, %d(%%rbp)\n",
+                reglist[r], Symtable[id].posn);
+    } else {
+        switch (Symtable[id].type) {
+            case P_CHAR:
+                fprintf(Outfile, "\tmovb\t%s, %d(%%rbp)\n",
+                        breglist[r], Symtable[id].posn);
+                break;
+            case P_INT:
+                fprintf(Outfile, "\tmovl\t%s, %d(%%rbp)\n",
+                        dreglist[r], Symtable[id].posn);
+                break;
+            default:
+                fatald("Bad type in cgstorlocal()", Symtable[id].type);
+        }
     }
     return (r);
 }
 
 int cgstorglob(int r, int id) {
-    switch (Symtable[id].type) {
-        case P_CHAR:
-            fprintf(Outfile, "\tmovb\t%s, %s(%%rip)\n",
-                    breglist[r], Symtable[id].name);
-            break;
-        case P_INT:
-            fprintf(Outfile, "\tmovl\t%s, %s(%%rip)\n",
-                    dreglist[r], Symtable[id].name);
-            break;
-        case P_LONG:
-        case P_CHARPTR:
-        case P_INTPTR:
-        case P_LONGPTR:
-            fprintf(Outfile, "\tmovq\t%s, %s(%%rip)\n",
-                    reglist[r], Symtable[id].name);
-            break;
-        default:
-            fatald("Bad type in cgstorglob()", Symtable[id].type);
+    if (cgprimsize(Symtable[id].type) == 8) {
+        fprintf(Outfile, "\tmovq\t%s, %s(%%rip)\n",
+                reglist[r], Symtable[id].name);
+    } else {
+        switch (Symtable[id].type) {
+            case P_CHAR:
+                fprintf(Outfile, "\tmovb\t%s, %s(%%rip)\n",
+                        breglist[r], Symtable[id].name);
+                break;
+            case P_INT:
+                fprintf(Outfile, "\tmovl\t%s, %s(%%rip)\n",
+                        dreglist[r], Symtable[id].name);
+                break;
+            default:
+                fatald("Bad type in cgstorglob()", Symtable[id].type);
+        }
     }
     return (r);
 }
 
 int cgstorderef(int r1, int r2, int type) {
-    switch (type) {
-        case P_CHAR:
+
+    int size = genprimsize(type);
+
+    switch (size) {
+        case 1:
             fprintf(Outfile, "\tmovb\t%s, (%s)\n", breglist[r1], reglist[r2]);
             break;
-        case P_INT:
+        case 4:
             fprintf(Outfile, "\tmovl\t%s, (%s)\n", dreglist[r1], reglist[r2]);
             break;
-        case P_LONG:
+        case 8:
             fprintf(Outfile, "\tmovq\t%s, (%s)\n", reglist[r1], reglist[r2]);
             break;
         default:
@@ -278,53 +279,50 @@ int cgloadglobstr(int id) {
 int cgloadlocal(int id, int op) {
     int r = alloc_register();
 
-    switch (Symtable[id].type) {
-        case P_CHAR:
-            if (op == A_PREINC)
-                fprintf(Outfile, "\tincb\t%d(%%rbp)\n", Symtable[id].posn);
-            if (op == A_PREDEC)
-                fprintf(Outfile, "\tdecb\t%d(%%rbp)\n", Symtable[id].posn);
+    if (cgprimsize(Symtable[id].type) == 8) {
+        if (op == A_PREINC)
+            fprintf(Outfile, "\tincq\t%d(%%rbp)\n", Symtable[id].posn);
+        if (op == A_PREDEC)
+            fprintf(Outfile, "\tdecq\t%d(%%rbp)\n", Symtable[id].posn);
 
-            fprintf(Outfile, "\tmovsbq\t%d(%%rbp), %s\n", Symtable[id].posn, reglist[r]);
+        fprintf(Outfile, "\tmovq\t%d(%%rbp), %s\n", Symtable[id].posn, reglist[r]);
 
-            if (op == A_POSTINC)
-                fprintf(Outfile, "\tincb\t%d(%%rbp)\n", Symtable[id].posn);
-            if (op == A_POSTDEC)
-                fprintf(Outfile, "\tdecb\t%d(%%rbp)\n", Symtable[id].posn);
-            break;
+        if (op == A_POSTINC)
+            fprintf(Outfile, "\tincq\t%d(%%rbp)\n", Symtable[id].posn);
+        if (op == A_POSTDEC)
+            fprintf(Outfile, "\tdecq\t%d(%%rbp)\n", Symtable[id].posn);
+    } else {
+        switch (Symtable[id].type) {
+            case P_CHAR:
+                if (op == A_PREINC)
+                    fprintf(Outfile, "\tincb\t%d(%%rbp)\n", Symtable[id].posn);
+                if (op == A_PREDEC)
+                    fprintf(Outfile, "\tdecb\t%d(%%rbp)\n", Symtable[id].posn);
 
-        case P_INT:
-            if (op == A_PREINC)
-                fprintf(Outfile, "\tincl\t%d(%%rbp)\n", Symtable[id].posn);
-            if (op == A_PREDEC)
-                fprintf(Outfile, "\tdecl\t%d(%%rbp)\n", Symtable[id].posn);
+                fprintf(Outfile, "\tmovsbq\t%d(%%rbp), %s\n", Symtable[id].posn, reglist[r]);
 
-            fprintf(Outfile, "\tmovslq\t%d(%%rbp), %s\n", Symtable[id].posn, reglist[r]);
+                if (op == A_POSTINC)
+                    fprintf(Outfile, "\tincb\t%d(%%rbp)\n", Symtable[id].posn);
+                if (op == A_POSTDEC)
+                    fprintf(Outfile, "\tdecb\t%d(%%rbp)\n", Symtable[id].posn);
+                break;
 
-            if (op == A_POSTINC)
-                fprintf(Outfile, "\tincl\t%d(%%rbp)\n", Symtable[id].posn);
-            if (op == A_POSTDEC)
-                fprintf(Outfile, "\tdecl\t%d(%%rbp)\n", Symtable[id].posn);
-            break;
+            case P_INT:
+                if (op == A_PREINC)
+                    fprintf(Outfile, "\tincl\t%d(%%rbp)\n", Symtable[id].posn);
+                if (op == A_PREDEC)
+                    fprintf(Outfile, "\tdecl\t%d(%%rbp)\n", Symtable[id].posn);
 
-        case P_LONG:
-        case P_CHARPTR:
-        case P_INTPTR:
-        case P_LONGPTR:
-            if (op == A_PREINC)
-                fprintf(Outfile, "\tincq\t%d(%%rbp)\n", Symtable[id].posn);
-            if (op == A_PREDEC)
-                fprintf(Outfile, "\tdecq\t%d(%%rbp)\n", Symtable[id].posn);
+                fprintf(Outfile, "\tmovslq\t%d(%%rbp), %s\n", Symtable[id].posn, reglist[r]);
 
-            fprintf(Outfile, "\tmovq\t%d(%%rbp), %s\n", Symtable[id].posn, reglist[r]);
-
-            if (op == A_POSTINC)
-                fprintf(Outfile, "\tincq\t%d(%%rbp)\n", Symtable[id].posn);
-            if (op == A_POSTDEC)
-                fprintf(Outfile, "\tdecq\t%d(%%rbp)\n", Symtable[id].posn);
-            break;
-        default:
-            fatald("Bad type in cgloadlocal()", Symtable[id].type);
+                if (op == A_POSTINC)
+                    fprintf(Outfile, "\tincl\t%d(%%rbp)\n", Symtable[id].posn);
+                if (op == A_POSTDEC)
+                    fprintf(Outfile, "\tdecl\t%d(%%rbp)\n", Symtable[id].posn);
+                break;
+            default:
+                fatald("Bad type in cgloadlocal()", Symtable[id].type);
+        }
     }
     return (r);
 }
@@ -332,53 +330,50 @@ int cgloadlocal(int id, int op) {
 int cgloadglob(int id, int op) {
     int r = alloc_register();
 
-    switch (Symtable[id].type) {
-        case P_CHAR:
-            if (op == A_PREINC)
-                fprintf(Outfile, "\tincb\t%s(%%rip)\n", Symtable[id].name);
-            if (op == A_PREDEC)
-                fprintf(Outfile, "\tdecb\t%s(%%rip)\n", Symtable[id].name);
+    if (cgprimsize(Symtable[id].type) == 8) {
+        if (op == A_PREINC)
+            fprintf(Outfile, "\tincq\t%s(%%rip)\n", Symtable[id].name);
+        if (op == A_PREDEC)
+            fprintf(Outfile, "\tdecq\t%s(%%rip)\n", Symtable[id].name);
 
-            fprintf(Outfile, "\tmovsbq\t%s(%%rip), %s\n", Symtable[id].name, reglist[r]);
+        fprintf(Outfile, "\tmovq\t%s(%%rip), %s\n", Symtable[id].name, reglist[r]);
 
-            if (op == A_POSTINC)
-                fprintf(Outfile, "\tincb\t%s(%%rip)\n", Symtable[id].name);
-            if (op == A_POSTDEC)
-                fprintf(Outfile, "\tdecb\t%s(%%rip)\n", Symtable[id].name);
-            break;
+        if (op == A_POSTINC)
+            fprintf(Outfile, "\tincq\t%s(%%rip)\n", Symtable[id].name);
+        if (op == A_POSTDEC)
+            fprintf(Outfile, "\tdecq\t%s(%%rip)\n", Symtable[id].name);
+    } else {
+        switch (Symtable[id].type) {
+            case P_CHAR:
+                if (op == A_PREINC)
+                    fprintf(Outfile, "\tincb\t%s(%%rip)\n", Symtable[id].name);
+                if (op == A_PREDEC)
+                    fprintf(Outfile, "\tdecb\t%s(%%rip)\n", Symtable[id].name);
 
-        case P_INT:
-            if (op == A_PREINC)
-                fprintf(Outfile, "\tincl\t%s(%%rip)\n", Symtable[id].name);
-            if (op == A_PREDEC)
-                fprintf(Outfile, "\tdecl\t%s(%%rip)\n", Symtable[id].name);
+                fprintf(Outfile, "\tmovsbq\t%s(%%rip), %s\n", Symtable[id].name, reglist[r]);
 
-            fprintf(Outfile, "\tmovslq\t%s(%%rip), %s\n", Symtable[id].name, reglist[r]);
+                if (op == A_POSTINC)
+                    fprintf(Outfile, "\tincb\t%s(%%rip)\n", Symtable[id].name);
+                if (op == A_POSTDEC)
+                    fprintf(Outfile, "\tdecb\t%s(%%rip)\n", Symtable[id].name);
+                break;
 
-            if (op == A_POSTINC)
-                fprintf(Outfile, "\tincl\t%s(%%rip)\n", Symtable[id].name);
-            if (op == A_POSTDEC)
-                fprintf(Outfile, "\tdecl\t%s(%%rip)\n", Symtable[id].name);
-            break;
+            case P_INT:
+                if (op == A_PREINC)
+                    fprintf(Outfile, "\tincl\t%s(%%rip)\n", Symtable[id].name);
+                if (op == A_PREDEC)
+                    fprintf(Outfile, "\tdecl\t%s(%%rip)\n", Symtable[id].name);
 
-        case P_LONG:
-        case P_CHARPTR:
-        case P_INTPTR:
-        case P_LONGPTR:
-            if (op == A_PREINC)
-                fprintf(Outfile, "\tincq\t%s(%%rip)\n", Symtable[id].name);
-            if (op == A_PREDEC)
-                fprintf(Outfile, "\tdecq\t%s(%%rip)\n", Symtable[id].name);
+                fprintf(Outfile, "\tmovslq\t%s(%%rip), %s\n", Symtable[id].name, reglist[r]);
 
-            fprintf(Outfile, "\tmovq\t%s(%%rip), %s\n", Symtable[id].name, reglist[r]);
-
-            if (op == A_POSTINC)
-                fprintf(Outfile, "\tincq\t%s(%%rip)\n", Symtable[id].name);
-            if (op == A_POSTDEC)
-                fprintf(Outfile, "\tdecq\t%s(%%rip)\n", Symtable[id].name);
-            break;
-        default:
-            fatald("Bad type in cgloadglob()", Symtable[id].type);
+                if (op == A_POSTINC)
+                    fprintf(Outfile, "\tincl\t%s(%%rip)\n", Symtable[id].name);
+                if (op == A_POSTDEC)
+                    fprintf(Outfile, "\tdecl\t%s(%%rip)\n", Symtable[id].name);
+                break;
+            default:
+                fatald("Bad type in cgloadglob()", Symtable[id].type);
+        }
     }
     return (r);
 }
@@ -431,7 +426,7 @@ void cgreturn(int r, int id) {
 int cgcall(int id, int numargs) {
     int outr = alloc_register();
 
-    fprintf(Outfile, "\tcall\t%s\n", Symtable[id].name);
+    fprintf(Outfile, "\tcall\t%s@PLT\n", Symtable[id].name);
 
     if (numargs > 6)
         fprintf(Outfile, "\taddq\t$%d, %%rsp\n", 8*(numargs-6));
@@ -451,21 +446,24 @@ void cgcopyarg(int r, int argposn) {
 
 int cgaddress(int id) {
     int r = alloc_register();
-    fprintf(Outfile, "\tleaq\t%s(%%rip), %s\n", Symtable[id].name, reglist[r]);
-
+    if (Symtable[id].class == C_GLOBAL)
+        fprintf(Outfile, "\tleaq\t%s(%%rip), %s\n", Symtable[id].name, reglist[r]);
+    else
+        fprintf(Outfile, "\tleaq\t%d(%%rbp), %s\n", Symtable[id].posn, reglist[r]);
     return (r);
 }
 
 int cgderef(int r, int type) {
+    int size = cgprimsize(type);
 
-    switch (type) {
-        case P_CHARPTR:
+    switch (size) {
+        case 1:
             fprintf(Outfile, "\tmovzbq\t(%s), %s\n", reglist[r], reglist[r]);
             break;
-        case P_INTPTR:
+        case 4:
             fprintf(Outfile, "\tmovl\t(%s), %s\n", reglist[r], dreglist[r]);
             break;
-        case P_LONGPTR:
+        case 8:
             fprintf(Outfile, "\tmovq\t(%s), %s\n", reglist[r], reglist[r]);
             break;
         default:
@@ -483,11 +481,21 @@ int cgshlconst(int r, int val) {
     return (r);
 }
 
-static int psize[] = {0, 0 , 1, 4, 8, 8, 8, 8, 8};
 int cgprimsize(int type) {
-    if (type < P_NONE || type > P_LONGPTR)
-        fatal("Bad type in cgprimsize()");
-    return (psize[type]);
+    if (ptrtype(type))
+        return (8);
+    switch (type) {
+        case P_CHAR:
+            return (1);
+        case P_INT:
+            return (4);
+        case P_LONG:
+            return (8);
+        default:
+            fatald("Bad type in cgprimsize()", type);
+    }
+
+    return (0);
 }
 
 void cgglobsym(int id) {
