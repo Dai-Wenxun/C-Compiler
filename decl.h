@@ -4,11 +4,12 @@ int scan(struct token *t);
 
 // tree.c
 struct ASTnode *mkastnode(int op, int type,
-                        struct ASTnode *left,
-                        struct ASTnode *mid,
-                        struct ASTnode *right, int intvalue);
-struct ASTnode *mkastleaf(int op, int type, int intvalue);
-struct ASTnode *mkastunary(int op, int type, struct ASTnode *left, int intvalue);
+                struct ASTnode *left, struct ASTnode *mid, struct ASTnode *right,
+                struct symtable *sym, int intvalue);
+struct ASTnode *mkastleaf(int op, int type,
+                struct symtable *sym, int intvalue);
+struct ASTnode *mkastunary(int op, int type, struct ASTnode *left,
+                struct symtable *sym, int intvalue);
 void dumpAST(struct ASTnode *n, int label, int level);
 
 // gen.c
@@ -17,7 +18,7 @@ int genAST(struct ASTnode *n, int label, int parentASTop);
 void genpreamble(void);
 void genpostamble(void);
 void genfreeregs(void);
-void genglobsym(int id);
+void genglobsym(struct symtable *node);
 int genglobstr(char *strvalue);
 int genprimsize(int type);
 
@@ -27,10 +28,11 @@ void cgdataseg(void);
 void freeall_registers(void);
 void cgpreamble(void);
 void cgpostamble(void);
-void cgfuncpreamble(int id);
-void cgfuncpostamble(int id);
-int cgstorlocal(int r, int id);
-int cgstorglob(int r, int id);
+void cgfuncpreamble(struct symtable *sym);
+void cgfuncpostamble(struct symtable *sym);
+
+int cgstorglob(int r, struct symtable *sym);
+int cgstorlocal(int r, struct symtable *sym);
 int cgstorderef(int r1, int r2, int type);
 int cgor(int r1, int r2);
 int cgxor(int r1, int r2);
@@ -44,22 +46,22 @@ int cgsub(int r1, int r2);
 int cgmul(int r1, int r2);
 int cgdiv(int r1, int r2);
 int cgloadint(int value, int type);
-int cgloadglobstr(int id);
-int cgloadlocal(int id, int op);
-int cgloadglob(int id, int op);
+int cgloadglobstr(int label);
+int cgloadglob(struct symtable* sym, int op);
+int cgloadlocal(struct symtable* sym, int op);
 int cgnegate(int r);
 int cginvert(int r);
 int cglognot(int r);
 int cgboolean(int r, int op, int label);
-void cgreturn(int r, int id);
-int cgcall(int r, int numargs);
-void cgcopyarg(int r, int argposn);
-int cgaddress(int id);
-int cgderef(int r, int type);
+void cgreturn(int r, struct symtable *sym);     //verified
+int cgcall(struct symtable *sym, int numargs);  //verified
+void cgcopyarg(int r, int argposn);             //verified
+int cgaddress(struct symtable *sym);            //verified
+int cgderef(int r, int type);                   //verified
 int cgwiden(int r, int oldtype, int newtype);
 int cgshlconst(int r, int val);
 int cgprimsize(int type);
-void cgglobsym(int id);
+void cgglobsym(struct symtable *node);
 void cgglobstr(int l, char *strvalue);
 void cglabel(int l);
 void cgjump(int l);
@@ -84,24 +86,28 @@ void fatald(char *s, int d);
 void fatalc(char *s, int c);
 
 // sym.c
-int findglob(char *s);
-int findlocl(char *s);
-int findsymbol(char *s);
-void copyfuncparams(int slot);
-int addglob(char *name, int type, int stype, int class, int size);
-int addlocl(char *name, int type, int stype, int class, int size);
-void freeloclsyms(void);
+void appendsym(struct symtable **head, struct symtable **tail,
+        struct symtable *node);
+struct symtable *addglob(char *name, int type, int stype, int class, int size);
+struct symtable *addlocl(char *name, int type, int stype, int class, int size);
+struct symtable *addparm(char *name, int type, int stype, int class, int size);
+struct symtable *findglob(char *s);
+struct symtable *findlocl(char *s);
+struct symtable *findsymbol(char *s);
+struct symtable *findcomposite(char *s);
 void clear_symtable(void);
+void freeloclsyms(void);
+
 
 // decl.c
-void var_declaration(int type, int class);
+struct symtable *var_declaration(int type, int class);
 struct ASTnode *function_declaration(int type);
 void global_declarations(void);
 
 // types.c
+int parse_type(void);
 int inttype(int type);
 int ptrtype(int type);
-int parse_type(void);
 int pointer_to(int type);
 int value_at(int type);
 struct ASTnode *modify_type(struct ASTnode *tree, int rtype, int op);

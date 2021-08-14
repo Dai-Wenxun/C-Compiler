@@ -3,16 +3,28 @@
 #include <string.h>
 #include <ctype.h>
 
-enum {
-    TEXTLEN = 512,
-    NSYMBOLS = 1024
-};
-
-
 #define AOUT "a.out"
 #define ASCMD "as -o"
 #define LDCMD "cc -o"
 
+enum {
+    TEXTLEN = 512,
+};
+
+enum {
+    NOREG = -1,
+    NOLABEL = 0
+};
+
+enum {
+    S_VARIABLE, S_FUNCTION, S_ARRAY
+};
+
+enum {
+    C_GLOBAL = 1,
+    C_LOCAL,
+    C_PARAM
+};
 enum {
   T_EOF,
 
@@ -41,11 +53,6 @@ enum {
   T_SEMI, T_COMMA,
 };
 
-struct token {
-  int token;
-  int intvalue;
-};
-
 enum {
     A_ASSIGN=1, A_LOGOR, A_LOGAND, A_OR, A_XOR, A_AND,
     A_EQ, A_NE, A_LT, A_GT, A_LE, A_GE, A_LSHIFT, A_RSHIFT,
@@ -65,34 +72,9 @@ enum {
     P_NONE, P_VOID=16, P_CHAR=32, P_INT=48, P_LONG=64,
 };
 
-// Abstract Syntax Tree structure
-struct ASTnode {
-    int op;
-    int type;
-    int rvalue;
-    struct ASTnode *left;
-    struct ASTnode *mid;
-    struct ASTnode *right;
-    union {
-        int intvalue;
-        int id;
-        int size;
-    };
-};
-
-enum {
-    NOREG = -1,
-    NOLABEL = 0
-};
-
-enum {
-    S_VARIABLE, S_FUNCTION, S_ARRAY
-};
-
-enum {
-    C_GLOBAL = 1,
-    C_LOCAL,
-    C_PARAM
+struct token {
+    int token;
+    int intvalue;
 };
 
 struct symtable {
@@ -100,14 +82,28 @@ struct symtable {
     int type;
     int stype;
     int class;
-
     union {
         int size;
         int endlabel;
     };
-
     union {
         int posn;
         int nelems;
+    };
+    struct symtable *next;
+    struct symtable *member;
+};
+
+struct ASTnode {
+    int op;
+    int type;
+    int rvalue;
+    struct ASTnode *left;
+    struct ASTnode *mid;
+    struct ASTnode *right;
+    struct symtable *sym;
+    union {
+        int intvalue;
+        int size;
     };
 };
