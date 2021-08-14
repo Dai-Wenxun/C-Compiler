@@ -2,15 +2,30 @@
 #include "data.h"
 #include "decl.h"
 
-void var_declaration(int type, int class) {
+struct symtable *var_declaration(int type, int class) {
+    struct symtable *sym = NULL;
+
+    switch (class) {
+        case C_GLOBAL:
+            if (findglob(Text) != NULL)
+                fatals("Duplicate global variable declaration", Text);
+        case C_LOCAL:
+        case C_PARAM:
+            if (findlocl(Text) != NULL)
+                fatals("Duplicate local variable declaration", Text);
+    }
+
     if (Token.token == T_LBRACKET) {
         scan(&Token);
 
         if (Token.token == T_INTLIT) {
-            if (class == C_LOCAL) {
-                fatal("For now, declaration of local arrays is not implemented");
-            } else {
-                addglob(Text, pointer_to(type), S_ARRAY, class, Token.intvalue);
+            switch (class) {
+                case C_GLOBAL:
+                    sym = addglob(Text, pointer_to(type), S_ARRAY, class, Token.intvalue);
+                    break;
+                case C_LOCAL:
+                case C_PARAM:
+                    fatal("For now, declaration of local arrays is not implemented");
             }
         }
 
@@ -18,34 +33,37 @@ void var_declaration(int type, int class) {
         match(T_RBRACKET, "]");
 
     } else {
-        if (class == C_LOCAL) {
-            if (addlocl(Text, type, S_VARIABLE, class, 1) == -1)
-                fatals("Duplicate local variable declaration", Text);
-        } else {
-            addglob(Text, type, S_VARIABLE, class, 1);
+        switch (class) {
+            case C_GLOBAL:
+                sym = addglob(Text, type, S_VARIABLE, class, 1);
+                break;
+            case C_LOCAL:
+                sym = addlocl(Text, type, S_VARIABLE, class, 1);
+                break;
+            case C_PARAM:
+                sym = addparm(Text, type, S_VARIABLE, class, 1);
+                break;
         }
     }
-
+    return (sym);
 }
 
-static int param_declaration(int id) {
-    int type, param_id;
-    int orig_paramcnt;
+static int param_declaration(struct symtable *funcsym) {
+    int type;
     int paramcnt = 0;
+    struct symtable *protoptr = NULL;
 
-    param_id = id + 1;
-
-    if (param_id)
-        orig_paramcnt = Symtable[id].nelems;
+    if (funcsym != NULL)
+        protoptr = funcsym->member;
 
     while (Token.token != T_RPAREN) {
         type = parse_type();
         ident();
 
-        if (param_id) {
-            if (type != Symtable[param_id].type)
+        if (protoptr != NULL) {
+            if (type != protoptr->type)
                 fatald("Type doesn't match prototype for parameter", paramcnt + 1);
-            param_id++;
+            protoptr = protoptr->next;
         } else {
             var_declaration(type, C_PARAM);
         }
@@ -63,43 +81,44 @@ static int param_declaration(int id) {
         }
     }
 
-    if ((id != -1) && (paramcnt != orig_paramcnt))
-        fatals("Parameter count mismatch for function", Symtable[id].name);
+    if ((funcsym != NULL) && (paramcnt != funcsym->nelems))
+        fatals("Parameter count mismatch for function",funcsym->name);
 
     return (paramcnt);
 }
 
 struct ASTnode *function_declaration(int type) {
     struct ASTnode *tree, *finalstmt;
-    int id;
-    int nameslot, endlabel, paramcnt;
+    struct symtable *oldfuncsym, *newfuncsym = NULL;
+    int endlabel, paramcnt;
 
-    if ((id = findsymbol(Text)) != -1)
-        if (Symtable[id].stype != S_FUNCTION)
-            id = -1;
+    if ((oldfuncsym = findsymbol(Text)) != NULL)
+        if (oldfuncsym->stype != S_FUNCTION)
+            oldfuncsym = NULL;
 
-    if (id == -1) {
+    if (oldfuncsym == NULL) {
         endlabel = genlabel();
-        nameslot = addglob(Text, type, S_FUNCTION, C_GLOBAL, endlabel);
+        newfuncsym = addglob(Text, type, S_FUNCTION, C_GLOBAL, endlabel);
     }
 
     lparen();
-    paramcnt = param_declaration(id);
+    paramcnt = param_declaration(oldfuncsym);
     rparen();
 
-    if (id == -1)
-        Symtable[nameslot].nelems = paramcnt;
+    if (newfuncsym) {
+        newfuncsym->nelems = paramcnt;
+        newfuncsym->member = Parmhead;
+        oldfuncsym = newfuncsym;
+    }
+
+    Parmhead = Parmtail = NULL;
 
     if (Token.token == T_SEMI) {
         scan(&Token);
         return (NULL);
     }
 
-    if (id == -1)
-        id = nameslot;
-    copyfuncparams(id);
-
-    Functionid = id;
+    Functionid = oldfuncsym;
 
     tree = compound_statement();
 
@@ -112,7 +131,7 @@ struct ASTnode *function_declaration(int type) {
         if (finalstmt == NULL || finalstmt->op != A_RETURN)
             fatal("No return for function with non-void type");
     }
-    return (mkastunary(A_FUNCTION, type, tree, id));
+    return (mkastunary(A_FUNCTION, type, tree, oldfuncsym, endlabel));
 }
 
 void global_declarations(void) {
