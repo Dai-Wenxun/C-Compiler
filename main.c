@@ -116,7 +116,7 @@ static void usage(char *prog) {
     exit(1);
 }
 
-#define MAXOBJ 100
+enum {MAXOBJ = 100};
 int main(int argc, char* argv[]) {
     char *outfilename = AOUT;
     char *asmfile, *objfile;
@@ -164,7 +164,7 @@ int main(int argc, char* argv[]) {
 
         if (O_dolink || O_assemble) {
             objfile = do_assemble(asmfile);
-            if (objcnt == (MAXOBJ - 2)) {
+            if (objcnt == MAXOBJ - 1) {
                 fprintf(stderr, "Too many object files for the compiler to handle\n");
                 exit(1);
             }

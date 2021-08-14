@@ -66,7 +66,7 @@ struct ASTnode *modify_type(struct ASTnode *tree, int rtype, int op) {
         rsize = genprimsize(rtype);
 
         if (lsize < rsize)
-            return (mkastunary(A_WIDEN, rtype, tree, 0));
+            return (mkastunary(A_WIDEN, rtype, tree, NULL, 0));
 
         if (lsize > rsize)
             return (NULL);
@@ -81,7 +81,7 @@ struct ASTnode *modify_type(struct ASTnode *tree, int rtype, int op) {
         if (inttype(ltype) && ptrtype(rtype)) {
             rsize = genprimsize(value_at(rtype));
             if (rsize > 1)
-                return (mkastunary(A_SCALE, rtype, tree, rsize));
+                return (mkastunary(A_SCALE, rtype, tree, NULL, rsize));
             else
                 return (tree);
         }
