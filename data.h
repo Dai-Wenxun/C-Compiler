@@ -12,11 +12,12 @@ extern_ char *Outfilename;
 extern_ struct token Token;
 extern_ char Text[TEXTLEN + 1];
 
-struct symtable *Globhead, *Globtail;
-struct symtable *Loclhead, *Locltail;
-struct symtable *Parmhead, *Parmtail;
-struct symtable *Membhead, *Membtail;
-struct symtable *Structhead, *Structtail;
+extern_ struct symtable *Globhead, *Globtail;
+extern_ struct symtable *Loclhead, *Locltail;
+extern_ struct symtable *Parmhead, *Parmtail;
+extern_ struct symtable *Membhead, *Membtail;
+extern_ struct symtable *Structhead, *Structtail;
+extern_ struct symtable *Unionhead, *Uniontal;
 
 
 extern_ int O_dumpAST;

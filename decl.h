@@ -98,19 +98,21 @@ struct symtable *addmemb(char *name, int type, struct symtable *ctype,
                 int stype, int size);
 struct symtable *addstruct(char *name, int type, struct symtable *ctype,
                 int stype, int size);
-
+struct symtable *addunion(char *name, int type, struct symtable *ctype,
+                int stype, int size);
 struct symtable *findglob(char *s);
 struct symtable *findlocl(char *s);
 struct symtable *findsymbol(char *s);
 struct symtable *findmember(char *s);
 struct symtable *findstruct(char *s);
+struct symtable *findunion(char *s);
 void clear_symtable(void);
 void freeloclsyms(void);
 
 
 // decl.c
 struct symtable *var_declaration(int type, struct symtable *ctype, int class);
-struct symtable *struct_declaration(void);
+struct symtable *composite_declaration(int type);
 void global_declarations(void);
 
 // types.c
