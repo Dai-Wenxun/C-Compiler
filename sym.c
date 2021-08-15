@@ -65,9 +65,16 @@ struct symtable *addmemb(char *name, int type, struct symtable *ctype,
 }
 
 struct symtable *addstruct(char *name, int type, struct symtable *ctype,
-                         int stype, int size) {
+                int stype, int size) {
     struct symtable *sym = newsym(name, type, ctype, stype, C_STRUCT, size, 0);
     appendsym(&Structhead, &Structtail, sym);
+    return (sym);
+}
+
+struct symtable *addunion(char *name, int type, struct symtable *ctype,
+                int stype, int size) {
+    struct symtable *sym = newsym(name, type, ctype, stype, C_UNION, size, 0);
+    appendsym(&Unionhead, &Uniontal, sym);
     return (sym);
 }
 
@@ -114,6 +121,10 @@ struct symtable *findmember(char *s) {
 
 struct symtable *findstruct(char *s) {
     return (findsyminlist(s, Structhead));
+}
+
+struct symtable *findunion(char *s) {
+    return (findsyminlist(s, Unionhead));
 }
 
 void clear_symtable(void) {

@@ -25,7 +25,12 @@ int parse_type(struct symtable **ctype) {
             break;
         case T_STRUCT:
             type = P_STRUCT;
-            *ctype = struct_declaration();
+            *ctype = composite_declaration(P_STRUCT);
+            break;
+        case T_UNION:
+            type = P_UNION;
+            *ctype = composite_declaration(P_UNION);
+            break;
         default:
             fatald("Illegal type, token", Token.token);
     }
@@ -61,7 +66,7 @@ int value_at(int type) {
 }
 
 int typesize(int type, struct symtable *ctype) {
-    if (type == P_STRUCT)
+    if (type == P_STRUCT || type == P_UNION)
         return (ctype->size);
     return (genprimsize(type));
 }
