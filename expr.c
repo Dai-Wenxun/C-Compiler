@@ -69,6 +69,45 @@ static struct ASTnode *array_access(void) {
     return (left);
 }
 
+static struct ASTnode *member_access(int withpointer) {
+    struct ASTnode *left, *right;
+    struct symtable *compvar;
+    struct symtable *typeptr;
+    struct symtable *m;
+
+    if ((compvar = findsymbol(Text)) == NULL)
+        fatals("Undeclared variable", Text);
+    if (withpointer && compvar->type != pointer_to(P_STRUCT))
+        fatals("Undeclared variable", Text);
+    if (!withpointer && compvar->type != P_STRUCT)
+        fatals("Undeclared variable", Text);
+
+    if (withpointer)
+        left = mkastleaf(A_IDENT, pointer_to(P_STRUCT), compvar, 0);
+    else
+        left = mkastleaf(A_ADDR, P_STRUCT, compvar, 0);
+
+    left->rvalue = 1;
+
+    typeptr = compvar->ctype;
+
+    scan(&Token);
+    ident();
+
+    for (m = typeptr->member; m != NULL; m = m->next)
+        if (!strcmp(m->name, Text))
+            break;
+
+    if (m == NULL)
+        fatals("No member found in struct/union: ", Text);
+
+    right = mkastleaf(A_INTLIT, P_INT, NULL, m->posn);
+
+    left = mkastnode(A_ADD, pointer_to(m->type), left, NULL, right, NULL, 0);
+    left = mkastunary(A_DEREF, m->type, left, NULL, 0);
+    return (left);
+}
+
 static struct ASTnode *postfix(void) {
     struct ASTnode *n;
     struct symtable *varptr;
@@ -81,6 +120,10 @@ static struct ASTnode *postfix(void) {
     if (Token.token == T_LBRACKET)
         return (array_access());
 
+    if (Token.token == T_DOT)
+        return (member_access(0));
+    if (Token.token == T_ARROW)
+        return (member_access(1));
 
     if ((varptr = findsymbol(Text)) == NULL || varptr->stype != S_VARIABLE)
         fatals("Undeclared variable", Text);

@@ -222,3 +222,7 @@ int genglobstr(char *strvalue) {
 int genprimsize(int type) {
     return (cgprimsize(type));
 }
+
+int genalign(int type, int offset, int direction) {
+    return (cglign(type, offset, direction));
+}

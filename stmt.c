@@ -93,14 +93,15 @@ static struct ASTnode *return_statement(void) {
 
 static struct ASTnode *single_statement(void) {
     int type;
+    struct symtable *ctype;
 
     switch (Token.token) {
         case T_CHAR:
         case T_INT:
         case T_LONG:
-            type = parse_type();
+            type = parse_type(&ctype);
             ident();
-            var_declaration(type, C_LOCAL);
+            var_declaration(type, ctype, C_LOCAL);
             semi();
             return (NULL);
         case T_IF:
