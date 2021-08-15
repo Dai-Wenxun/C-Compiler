@@ -15,7 +15,9 @@ extern_ char Text[TEXTLEN + 1];
 struct symtable *Globhead, *Globtail;
 struct symtable *Loclhead, *Locltail;
 struct symtable *Parmhead, *Parmtail;
-struct symtable *Comphead, *Comptail;
+struct symtable *Membhead, *Membtail;
+struct symtable *Structhead, *Structtail;
+
 
 extern_ int O_dumpAST;
 extern_ int O_keepasm;

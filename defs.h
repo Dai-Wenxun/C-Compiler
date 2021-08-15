@@ -23,7 +23,9 @@ enum {
 enum {
     C_GLOBAL = 1,
     C_LOCAL,
-    C_PARAM
+    C_PARAM,
+    C_STRUCT,
+    C_MEMBER
 };
 enum {
   T_EOF,
@@ -41,7 +43,7 @@ enum {
   T_INC, T_DEC, T_INVERT, T_LOGNOT,
 
   // Type keywords
-  T_VOID, T_CHAR, T_INT, T_LONG,
+  T_VOID, T_CHAR, T_INT, T_LONG, T_STRUCT,
 
   // Other keywords
   T_IF, T_ELSE, T_WHILE, T_FOR, T_RETURN,
@@ -50,7 +52,7 @@ enum {
   T_INTLIT, T_STRLIT, T_IDENT,
   T_LBRACE, T_RBRACE, T_LPAREN, T_RPAREN,
   T_LBRACKET, T_RBRACKET,
-  T_SEMI, T_COMMA,
+  T_SEMI, T_COMMA, T_DOT, T_ARROW
 };
 
 enum {
@@ -70,6 +72,7 @@ enum {
 
 enum {
     P_NONE, P_VOID=16, P_CHAR=32, P_INT=48, P_LONG=64,
+    P_STRUCT=80
 };
 
 struct token {
@@ -80,6 +83,7 @@ struct token {
 struct symtable {
     char *name;
     int type;
+    struct symtable *ctype;
     int stype;
     int class;
     union {

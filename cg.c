@@ -478,23 +478,6 @@ int cgshlconst(int r, int val) {
     return (r);
 }
 
-int cgprimsize(int type) {
-    if (ptrtype(type))
-        return (8);
-    switch (type) {
-        case P_CHAR:
-            return (1);
-        case P_INT:
-            return (4);
-        case P_LONG:
-            return (8);
-        default:
-            fatald("Bad type in cgprimsize()", type);
-    }
-
-    return (0);
-}
-
 void cgglobsym(struct symtable *node) {
     int typesize;
 
@@ -536,6 +519,42 @@ void cgglobstr(int l, char *strvalue)   {
         fprintf(Outfile, "\t.byte\t%d\n", *cptr);
     }
     fprintf(Outfile, "\t.byte\t0\n");
+}
+
+int cgprimsize(int type) {
+    if (ptrtype(type))
+        return (8);
+    switch (type) {
+        case P_CHAR:
+            return (1);
+        case P_INT:
+            return (4);
+        case P_LONG:
+            return (8);
+        default:
+            fatald("Bad type in cgprimsize()", type);
+    }
+
+    return (0);
+}
+
+int cglign(int type, int offset, int direction) {
+    int alignment;
+
+    switch (type) {
+        case P_CHAR:
+            return (offset);
+        case P_INT:
+        case P_LONG:
+            break;
+        default:
+            fatald("Bad type in calc_aligned_offset()", type);
+    }
+
+    alignment = 4;
+
+    offset = (offset + direction * (alignment-1)) & ~(alignment-1);
+    return (offset);
 }
 
 void cglabel(int l) {
