@@ -2,7 +2,7 @@
 #include "data.h"
 #include "decl.h"
 
-struct symtable *var_declaration(int type, int class) {
+struct symtable *var_declaration(int type, struct symtable *ctype, int class) {
     struct symtable *sym = NULL;
 
     switch (class) {
@@ -13,6 +13,9 @@ struct symtable *var_declaration(int type, int class) {
         case C_PARAM:
             if (findlocl(Text) != NULL)
                 fatals("Duplicate local variable declaration", Text);
+        case C_MEMBER:
+            if (findmember(Text) != NULL)
+                fatals("Duplicate struct/union member declaration", Text);
     }
 
     if (Token.token == T_LBRACKET) {
@@ -21,11 +24,12 @@ struct symtable *var_declaration(int type, int class) {
         if (Token.token == T_INTLIT) {
             switch (class) {
                 case C_GLOBAL:
-                    sym = addglob(Text, pointer_to(type), S_ARRAY, class, Token.intvalue);
+                    sym = addglob(Text, pointer_to(type), ctype, S_ARRAY, Token.intvalue);
                     break;
                 case C_LOCAL:
                 case C_PARAM:
-                    fatal("For now, declaration of local arrays is not implemented");
+                case C_MEMBER:
+                    fatal("For now, declaration of non-global arrays is not implemented");
             }
         }
 
@@ -35,29 +39,34 @@ struct symtable *var_declaration(int type, int class) {
     } else {
         switch (class) {
             case C_GLOBAL:
-                sym = addglob(Text, type, S_VARIABLE, class, 1);
+                sym = addglob(Text, type, ctype, S_VARIABLE, 1);
                 break;
             case C_LOCAL:
-                sym = addlocl(Text, type, S_VARIABLE, class, 1);
+                sym = addlocl(Text, type, ctype, S_VARIABLE, 1);
                 break;
             case C_PARAM:
-                sym = addparm(Text, type, S_VARIABLE, class, 1);
+                sym = addparm(Text, type, ctype, S_VARIABLE,  1);
+                break;
+            case C_MEMBER:
+                sym = addmemb(Text, type, ctype, S_VARIABLE, 1);
                 break;
         }
     }
     return (sym);
 }
 
-static int param_declaration(struct symtable *funcsym) {
+static int var_declaration_list(struct symtable *funcsym, int class,
+                        int separate_token, int end_token) {
     int type;
     int paramcnt = 0;
     struct symtable *protoptr = NULL;
+    struct symtable *ctype;
 
     if (funcsym != NULL)
         protoptr = funcsym->member;
 
-    while (Token.token != T_RPAREN) {
-        type = parse_type();
+    while (Token.token != end_token) {
+        type = parse_type(&ctype);
         ident();
 
         if (protoptr != NULL) {
@@ -65,20 +74,15 @@ static int param_declaration(struct symtable *funcsym) {
                 fatald("Type doesn't match prototype for parameter", paramcnt + 1);
             protoptr = protoptr->next;
         } else {
-            var_declaration(type, C_PARAM);
+            var_declaration(type, ctype, class);
         }
 
         paramcnt++;
 
-        switch (Token.token) {
-            case T_COMMA:
-                scan(&Token);
-                break;
-            case T_RPAREN:
-                break;
-            default:
-                fatald("Unexpected token in parameter list", Token.token);
-        }
+        if ((Token.token != separate_token) && (Token.token != end_token))
+            fatald("Unexpected token in parameter list", Token.token);
+        if (Token.token == separate_token)
+            scan(&Token);
     }
 
     if ((funcsym != NULL) && (paramcnt != funcsym->nelems))
@@ -87,7 +91,7 @@ static int param_declaration(struct symtable *funcsym) {
     return (paramcnt);
 }
 
-struct ASTnode *function_declaration(int type) {
+static struct ASTnode *function_declaration(int type) {
     struct ASTnode *tree, *finalstmt;
     struct symtable *oldfuncsym, *newfuncsym = NULL;
     int endlabel, paramcnt;
@@ -98,11 +102,11 @@ struct ASTnode *function_declaration(int type) {
 
     if (oldfuncsym == NULL) {
         endlabel = genlabel();
-        newfuncsym = addglob(Text, type, S_FUNCTION, C_GLOBAL, endlabel);
+        newfuncsym = addglob(Text, type, NULL, S_FUNCTION, endlabel);
     }
 
     lparen();
-    paramcnt = param_declaration(oldfuncsym);
+    paramcnt = var_declaration_list(oldfuncsym, C_PARAM, T_COMMA, T_RPAREN);
     rparen();
 
     if (newfuncsym) {
@@ -134,14 +138,67 @@ struct ASTnode *function_declaration(int type) {
     return (mkastunary(A_FUNCTION, type, tree, oldfuncsym, endlabel));
 }
 
+struct symtable *struct_declaration(void) {
+    struct symtable *ctype = NULL;
+    struct symtable *m;
+    int offset;
+
+    scan(&Token);
+
+    if (Token.token == T_IDENT) {
+        ctype = findstruct(Text);
+        scan(&Token);
+    }
+
+    if (Token.token != T_LBRACE) {
+        if (ctype == NULL)
+            fatals("unknown struct type", Text);
+        return (ctype);
+    }
+
+    if (ctype)
+        fatals("previously defined struct", Text);
+
+    ctype = addstruct(Text, P_STRUCT, NULL, 0, 0);
+    scan(&Token);
+
+    var_declaration_list(NULL, C_MEMBER, T_SEMI, T_LBRACE);
+    rbrace();
+
+    ctype->member = Membhead;
+    Membhead = Membtail = NULL;
+
+    m = ctype->member;
+    m->posn = 0;
+
+    offset = typesize(m->type, m->ctype);
+
+    for (m = m->next; m != NULL; m = m->next) {
+        m->posn = genalign(m->type, offset, 1);
+
+        offset += typesize(m->type, m->ctype);
+    }
+
+    ctype->size = offset;
+    return (ctype);
+}
+
 void global_declarations(void) {
     struct ASTnode *tree;
+    struct symtable *ctype;
     int type;
 
     while (1) {
-        type = parse_type();
-        ident();
+        if (Token.token == T_EOF)
+            break;
 
+        type = parse_type(&ctype);
+        if (type == P_STRUCT && Token.token == T_SEMI) {
+            scan(&Token);
+            continue;
+        }
+
+        ident();
         if (Token.token == T_LPAREN) {
             tree = function_declaration(type);
 
@@ -156,11 +213,8 @@ void global_declarations(void) {
 
             freeloclsyms();
         } else {
-            var_declaration(type, C_GLOBAL);
+            var_declaration(type, ctype, C_GLOBAL);
             semi();
         }
-
-        if (Token.token == T_EOF)
-            break;
     }
 }

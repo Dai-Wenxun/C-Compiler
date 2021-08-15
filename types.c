@@ -2,31 +2,39 @@
 #include "data.h"
 #include "decl.h"
 
-int parse_type(void) {
+int parse_type(struct symtable **ctype) {
     int type;
+    *ctype = NULL;
 
     switch (Token.token) {
         case T_VOID:
             type = P_VOID;
+            scan(&Token);
             break;
         case T_CHAR:
             type = P_CHAR;
+            scan(&Token);
             break;
         case T_INT:
             type = P_INT;
+            scan(&Token);
             break;
         case T_LONG:
             type = P_LONG;
+            scan(&Token);
             break;
+        case T_STRUCT:
+            type = P_STRUCT;
+            *ctype = struct_declaration();
         default:
             fatald("Illegal type, token", Token.token);
     }
 
     while (1) {
-        scan(&Token);
         if (Token.token != T_STAR)
             break;
         type = pointer_to(type);
+        scan(&Token);
     }
 
     return (type);
@@ -52,11 +60,20 @@ int value_at(int type) {
     return (type - 1);
 }
 
+int typesize(int type, struct symtable *ctype) {
+    if (type == P_STRUCT)
+        return (ctype->size);
+    return (genprimsize(type));
+}
+
 struct ASTnode *modify_type(struct ASTnode *tree, int rtype, int op) {
     int ltype;
     int lsize, rsize;
 
     ltype = tree->type;
+
+    if (ltype == P_STRUCT || rtype == P_STRUCT)
+        fatald("Bad type in modify_type()", P_STRUCT);
 
     if (inttype(ltype) && inttype(rtype)) {
         if (ltype == rtype)
