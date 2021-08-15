@@ -138,7 +138,7 @@ static struct ASTnode *function_declaration(int type) {
     return (mkastunary(A_FUNCTION, type, tree, oldfuncsym, endlabel));
 }
 
-struct symtable *struct_declaration(void) {
+struct symtable *composite_declaration(int type) {
     struct symtable *ctype = NULL;
     struct symtable *m;
     int offset;
@@ -146,20 +146,27 @@ struct symtable *struct_declaration(void) {
     scan(&Token);
 
     if (Token.token == T_IDENT) {
-        ctype = findstruct(Text);
+        if (type == P_STRUCT)
+            ctype = findstruct(Text);
+        else
+            ctype = findunion(Text);
         scan(&Token);
     }
 
     if (Token.token != T_LBRACE) {
         if (ctype == NULL)
-            fatals("unknown struct type", Text);
+            fatals("unknown struct/union type", Text);
         return (ctype);
     }
 
     if (ctype)
         fatals("previously defined struct", Text);
 
-    ctype = addstruct(Text, P_STRUCT, NULL, 0, 0);
+    if (type == P_STRUCT)
+        ctype = addstruct(Text, P_STRUCT, NULL, 0, 0);
+    else
+        ctype = addunion(Text, P_UNION, NULL, 0, 0);
+
     scan(&Token);
 
     var_declaration_list(NULL, C_MEMBER, T_SEMI, T_LBRACE);
@@ -174,7 +181,10 @@ struct symtable *struct_declaration(void) {
     offset = typesize(m->type, m->ctype);
 
     for (m = m->next; m != NULL; m = m->next) {
-        m->posn = genalign(m->type, offset, 1);
+        if (type == P_STRUCT)
+            m->posn = genalign(m->type, offset, 1);
+        else
+            m->posn = 0;
 
         offset += typesize(m->type, m->ctype);
     }
@@ -193,7 +203,7 @@ void global_declarations(void) {
             break;
 
         type = parse_type(&ctype);
-        if (type == P_STRUCT && Token.token == T_SEMI) {
+        if ((type == P_STRUCT || type == P_UNION) && Token.token == T_SEMI) {
             scan(&Token);
             continue;
         }
