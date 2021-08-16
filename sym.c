@@ -74,58 +74,85 @@ struct symtable *addstruct(char *name, int type, struct symtable *ctype,
 struct symtable *addunion(char *name, int type, struct symtable *ctype,
                 int stype, int size) {
     struct symtable *sym = newsym(name, type, ctype, stype, C_UNION, size, 0);
-    appendsym(&Unionhead, &Uniontal, sym);
+    appendsym(&Unionhead, &Uniontail, sym);
     return (sym);
 }
 
-static struct symtable *findsyminlist(char *s, struct symtable *list) {
+struct symtable *addenum(char *name, int class, int value) {
+    struct symtable *sym = newsym(name, P_INT, NULL, 0, class, 0, value);
+    appendsym(&Enumhead, &Enumtail, sym);
+    return (sym);
+}
+
+struct symtable *addtypedef(char *name, int type, struct symtable *ctype,
+                int stype, int size) {
+    struct symtable *sym = newsym(name, type, ctype, stype, C_TYPEDEF, size, 0);
+    appendsym(&Typehead, &Typetail, sym);
+    return (sym);
+}
+
+static struct symtable *findsyminlist(char *s, struct symtable *list, int class) {
     for (; list != NULL; list = list->next) {
         if ((list->name != NULL) && !strcmp(s, list->name))
-            return (list);
+            if (class == 0 || class == list->class)
+                return (list);
     }
     return (NULL);
 }
 
 struct symtable *findglob(char *s) {
-    return (findsyminlist(s, Globhead));
+    return (findsyminlist(s, Globhead, 0));
 }
 
 struct symtable *findlocl(char *s) {
     struct symtable *node;
 
     if (Functionid) {
-        node = findsyminlist(s, Functionid->member);
+        node = findsyminlist(s, Functionid->member, 0);
         if (node)
             return (node);
     }
-    return (findsyminlist(s, Loclhead));
+    return (findsyminlist(s, Loclhead, 0));
 }
 
 struct symtable *findsymbol(char *s) {
     struct symtable *node;
 
     if (Functionid) {
-        node = findsyminlist(s, Functionid->member);
+        node = findsyminlist(s, Functionid->member, 0);
         if (node)
             return (node);
     }
-    node = findsyminlist(s, Loclhead);
+    node = findsyminlist(s, Loclhead, 0);
     if (node)
         return (node);
-    return (findsyminlist(s, Globhead));
+    return (findsyminlist(s, Globhead, 0));
 }
 
 struct symtable *findmember(char *s) {
-    return (findsyminlist(s, Membhead));
+    return (findsyminlist(s, Membhead, 0));
 }
 
 struct symtable *findstruct(char *s) {
-    return (findsyminlist(s, Structhead));
+    return (findsyminlist(s, Structhead, 0));
 }
 
 struct symtable *findunion(char *s) {
-    return (findsyminlist(s, Unionhead));
+    return (findsyminlist(s, Unionhead, 0));
 }
+
+struct symtable *findenumtype(char *s) {
+    return (findsyminlist(s, Enumhead, C_ENUMTYPE));
+}
+
+struct symtable *findenumval(char *s) {
+    return (findsyminlist(s, Enumhead, C_ENUMVAL));
+}
+
+struct symtable *findtypedef(char *s) {
+
+}
+
 
 void clear_symtable(void) {
     Globhead = Globtail = NULL;
@@ -133,6 +160,9 @@ void clear_symtable(void) {
     Parmhead = Parmtail = NULL;
     Membhead = Membtail = NULL;
     Structhead = Structtail = NULL;
+    Unionhead = Uniontail = NULL;
+    Enumhead = Enumtail = NULL;
+    Typehead = Typetail = NULL;
 }
 
 void freeloclsyms(void) {

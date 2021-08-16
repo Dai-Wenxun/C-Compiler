@@ -2,48 +2,6 @@
 #include "data.h"
 #include "decl.h"
 
-int parse_type(struct symtable **ctype) {
-    int type;
-    *ctype = NULL;
-
-    switch (Token.token) {
-        case T_VOID:
-            type = P_VOID;
-            scan(&Token);
-            break;
-        case T_CHAR:
-            type = P_CHAR;
-            scan(&Token);
-            break;
-        case T_INT:
-            type = P_INT;
-            scan(&Token);
-            break;
-        case T_LONG:
-            type = P_LONG;
-            scan(&Token);
-            break;
-        case T_STRUCT:
-            type = P_STRUCT;
-            *ctype = composite_declaration(P_STRUCT);
-            break;
-        case T_UNION:
-            type = P_UNION;
-            *ctype = composite_declaration(P_UNION);
-            break;
-        default:
-            fatald("Illegal type, token", Token.token);
-    }
-
-    while (1) {
-        if (Token.token != T_STAR)
-            break;
-        type = pointer_to(type);
-        scan(&Token);
-    }
-
-    return (type);
-}
 
 int inttype(int type) {
     return ((type & 0xf) == 0);
@@ -77,8 +35,10 @@ struct ASTnode *modify_type(struct ASTnode *tree, int rtype, int op) {
 
     ltype = tree->type;
 
-    if (ltype == P_STRUCT || rtype == P_STRUCT)
-        fatald("Bad type in modify_type()", P_STRUCT);
+    if (ltype == P_STRUCT || ltype == P_UNION)
+        fatal("Don't know how to do this yet");
+    if (rtype == P_STRUCT || rtype == P_UNION)
+        fatal("Don't know how to do this yet");
 
     if (inttype(ltype) && inttype(rtype)) {
         if (ltype == rtype)
