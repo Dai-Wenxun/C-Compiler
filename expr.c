@@ -85,9 +85,9 @@ static struct ASTnode *member_access(int withpointer) {
         fatals("Undeclared variable", Text);
 
     if (withpointer)
-        left = mkastleaf(A_IDENT, pointer_to(P_STRUCT), compvar, 0);
+        left = mkastleaf(A_IDENT, pointer_to(compvar->type), compvar, 0);
     else
-        left = mkastleaf(A_ADDR, P_STRUCT, compvar, 0);
+        left = mkastleaf(A_ADDR, compvar->type, compvar, 0);
 
     left->rvalue = 1;
 

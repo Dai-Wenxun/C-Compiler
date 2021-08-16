@@ -2,6 +2,73 @@
 #include "data.h"
 #include "decl.h"
 
+static struct symtable *composite_declaration(int type);
+static void enum_declaration(void);
+int typedef_declaration(struct symtable **ctype);
+int type_of_typedef(char *name, struct symtable **ctype);
+
+int parse_type(struct symtable **ctype) {
+    int type;
+    *ctype = NULL;
+
+    switch (Token.token) {
+        case T_VOID:
+            type = P_VOID;
+            scan(&Token);
+            break;
+        case T_CHAR:
+            type = P_CHAR;
+            scan(&Token);
+            break;
+        case T_INT:
+            type = P_INT;
+            scan(&Token);
+            break;
+        case T_LONG:
+            type = P_LONG;
+            scan(&Token);
+            break;
+
+        case T_STRUCT:
+            type = P_STRUCT;
+            *ctype = composite_declaration(P_STRUCT);
+            if (Token.token == T_SEMI)
+                type = -1;
+            break;
+        case T_UNION:
+            type = P_UNION;
+            *ctype = composite_declaration(P_UNION);
+            if (Token.token == T_SEMI)
+                type = -1;
+            break;
+        case T_ENUM:
+            type = P_INT;
+            enum_declaration();
+            if (Token.token == T_SEMI)
+                type = -1;
+            break;
+        case T_TYPEDEF:
+            type = typedef_declaration(ctype);
+            if (Token.token == T_SEMI)
+                type = -1;
+            break;
+        case T_IDENT:
+            type = type_of_typedef(Text, ctype);
+            break;
+        default:
+            fatald("Illegal type, token", Token.token);
+    }
+
+    while (1) {
+        if (Token.token != T_STAR)
+            break;
+        type = pointer_to(type);
+        scan(&Token);
+    }
+
+    return (type);
+}
+
 struct symtable *var_declaration(int type, struct symtable *ctype, int class) {
     struct symtable *sym = NULL;
 
@@ -9,13 +76,16 @@ struct symtable *var_declaration(int type, struct symtable *ctype, int class) {
         case C_GLOBAL:
             if (findglob(Text) != NULL)
                 fatals("Duplicate global variable declaration", Text);
+            break;
         case C_LOCAL:
         case C_PARAM:
             if (findlocl(Text) != NULL)
                 fatals("Duplicate local variable declaration", Text);
+            break;
         case C_MEMBER:
             if (findmember(Text) != NULL)
                 fatals("Duplicate struct/union member declaration", Text);
+            break;
     }
 
     if (Token.token == T_LBRACKET) {
@@ -169,7 +239,7 @@ struct symtable *composite_declaration(int type) {
 
     scan(&Token);
 
-    var_declaration_list(NULL, C_MEMBER, T_SEMI, T_LBRACE);
+    var_declaration_list(NULL, C_MEMBER, T_SEMI, T_RBRACE);
     rbrace();
 
     ctype->member = Membhead;
@@ -186,11 +256,86 @@ struct symtable *composite_declaration(int type) {
         else
             m->posn = 0;
 
-        offset += typesize(m->type, m->ctype);
+        offset = m->posn + (typesize(m->type, m->ctype)>4 ? typesize(m->type, m->ctype) : 4);
     }
 
     ctype->size = offset;
     return (ctype);
+}
+
+static void enum_declaration(void) {
+    struct symtable *etype = NULL;
+    char *name;
+    int intval = 0;
+
+    scan(&Token);
+
+    if (Token.token == T_IDENT) {
+        etype = findenumtype(Text);
+        name = strdup(Text);
+        scan(&Token);
+    }
+
+    if (Token.token != T_LBRACE) {
+        if (etype == NULL)
+            fatals("undeclared enum type:", name);
+        return;
+    }
+
+    scan(&Token);
+
+    if (etype != NULL)
+        fatals("enum type redeclared:", etype->name);
+    else
+        etype = addenum(name, C_ENUMTYPE, 0);
+
+    while (1) {
+        ident();
+        name = strdup(Text);
+
+        etype = findenumval(name);
+        if (etype != NULL)
+            fatals("enum value redeclared:", Text);
+
+        if (Token.token == A_ASSIGN) {
+            scan(&Token);
+            if (Token.token != T_INTLIT)
+                fatal("Expected int literal after '='");
+            intval = Token.intvalue;
+            scan(&Token);
+        }
+
+        etype = addenum(name, C_ENUMVAL, intval++);
+        if (Token.token == T_RBRACE)
+            break;
+        comma();
+    }
+}
+
+int typedef_declaration(struct symtable **ctype) {
+    int type;
+
+    scan(&Token);
+
+    type = parse_type(ctype);
+
+    if (findtypedef(Text) != NULL)
+        fatals("redefinition of typedef", Text);
+    addtypedef(Text, type, *ctype, 0, 0);
+    scan(&Token);
+    return (type);
+}
+
+int type_of_typedef(char *name, struct symtable **ctype) {
+    struct symtable *t;
+
+    t = findtypedef(name);
+    if (t == NULL)
+        fatals("unknown type", name);
+
+    scan(&Token);
+    *ctype = t->ctype;
+    return (t->type);
 }
 
 void global_declarations(void) {
@@ -203,8 +348,8 @@ void global_declarations(void) {
             break;
 
         type = parse_type(&ctype);
-        if ((type == P_STRUCT || type == P_UNION) && Token.token == T_SEMI) {
-            scan(&Token);
+        if (type == -1) {
+            semi();
             continue;
         }
 

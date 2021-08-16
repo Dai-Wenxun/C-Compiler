@@ -34,6 +34,10 @@ void rparen(void) {
     match(T_RPAREN, ")");
 }
 
+void comma(void) {
+    match(T_COMMA, "comma");
+}
+
 void fatal(char *s) {
     fprintf(stderr, "%s on line %d\n", s, Line);
     fclose(Outfile);
