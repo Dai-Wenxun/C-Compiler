@@ -82,6 +82,7 @@ void rbrace(void);
 void lparen(void);
 void rparen(void);
 void ident(void);
+void comma(void);
 void fatal(char *s);
 void fatals(char *s1, char *s2);
 void fatald(char *s, int d);
@@ -100,23 +101,28 @@ struct symtable *addstruct(char *name, int type, struct symtable *ctype,
                 int stype, int size);
 struct symtable *addunion(char *name, int type, struct symtable *ctype,
                 int stype, int size);
+struct symtable *addenum(char *name, int class, int value);
+struct symtable *addtypedef(char *name, int type, struct symtable *ctype,
+                int stype, int size);
 struct symtable *findglob(char *s);
 struct symtable *findlocl(char *s);
 struct symtable *findsymbol(char *s);
 struct symtable *findmember(char *s);
 struct symtable *findstruct(char *s);
 struct symtable *findunion(char *s);
+struct symtable *findenumtype(char *s);
+struct symtable *findenumval(char *s);
+struct symtable *findtypedef(char *s);
 void clear_symtable(void);
 void freeloclsyms(void);
 
 
 // decl.c
+int parse_type(struct symtable **ctype);
 struct symtable *var_declaration(int type, struct symtable *ctype, int class);
-struct symtable *composite_declaration(int type);
 void global_declarations(void);
 
 // types.c
-int parse_type(struct symtable **ctype);
 int inttype(int type);
 int ptrtype(int type);
 int pointer_to(int type);

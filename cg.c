@@ -479,36 +479,33 @@ int cgshlconst(int r, int val) {
 }
 
 void cgglobsym(struct symtable *node) {
-    int typesize;
+    int size;
 
     if (node == NULL)
         return;
 
     if (node->stype == S_FUNCTION)
         return;
-    else if (node->type == S_ARRAY)
-        typesize = cgprimsize(value_at(node->type));
-    else
-        typesize = cgprimsize(node->type);
+
+    size = typesize(node->type, node->ctype);
 
     cgdataseg();
     fprintf(Outfile, "\t.globl\t%s\n", node->name);
     fprintf(Outfile, "%s:", node->name);
 
-    for (int i = 0; i < node->size; ++i) {
-        switch (typesize) {
-            case 1:
+    switch (size) {
+        case 1:
+            fprintf(Outfile, "\t.byte\t0\n");
+            break;
+        case 4:
+            fprintf(Outfile, "\t.long\t0\n");
+            break;
+        case 8:
+            fprintf(Outfile, "\t.quad\t0\n");
+            break;
+        default:
+            for (int i = 0; i < size; ++i)
                 fprintf(Outfile, "\t.byte\t0\n");
-                break;
-            case 4:
-                fprintf(Outfile, "\t.long\t0\n");
-                break;
-            case 8:
-                fprintf(Outfile, "\t.quad\t0\n");
-                break;
-            default:
-                fatald("Unknown typesize in cgglobsym()", typesize);
-        }
     }
 }
 

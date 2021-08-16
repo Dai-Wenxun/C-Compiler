@@ -17,7 +17,7 @@ enum {
 };
 
 enum {
-    S_VARIABLE, S_FUNCTION, S_ARRAY
+    S_VARIABLE=1, S_FUNCTION, S_ARRAY
 };
 
 enum {
@@ -26,7 +26,10 @@ enum {
     C_PARAM,
     C_STRUCT,
     C_UNION,
-    C_MEMBER
+    C_MEMBER,
+    C_ENUMTYPE,
+    C_ENUMVAL,
+    C_TYPEDEF
 };
 enum {
   T_EOF,
@@ -44,10 +47,10 @@ enum {
   T_INC, T_DEC, T_INVERT, T_LOGNOT,
 
   // Type keywords
-  T_VOID, T_CHAR, T_INT, T_LONG, T_STRUCT, T_UNION,
+  T_VOID, T_CHAR, T_INT, T_LONG, T_STRUCT, T_UNION, T_ENUM,
 
   // Other keywords
-  T_IF, T_ELSE, T_WHILE, T_FOR, T_RETURN,
+  T_IF, T_ELSE, T_WHILE, T_FOR, T_RETURN, T_TYPEDEF,
 
   // Structural tokens
   T_INTLIT, T_STRLIT, T_IDENT,

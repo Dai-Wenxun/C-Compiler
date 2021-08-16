@@ -17,8 +17,9 @@ extern_ struct symtable *Loclhead, *Locltail;
 extern_ struct symtable *Parmhead, *Parmtail;
 extern_ struct symtable *Membhead, *Membtail;
 extern_ struct symtable *Structhead, *Structtail;
-extern_ struct symtable *Unionhead, *Uniontal;
-
+extern_ struct symtable *Unionhead, *Uniontail;
+extern_ struct symtable *Enumhead, *Enumtail;
+extern_ struct symtable *Typehead, *Typetail;
 
 extern_ int O_dumpAST;
 extern_ int O_keepasm;
