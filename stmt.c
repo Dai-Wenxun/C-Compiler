@@ -99,6 +99,7 @@ static struct ASTnode *single_statement(void) {
         case T_CHAR:
         case T_INT:
         case T_LONG:
+        case T_STRUCT:
             type = parse_type(&ctype);
             ident();
             var_declaration(type, ctype, C_LOCAL);
