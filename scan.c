@@ -10,7 +10,7 @@ static int chrpos(char *s, int c) {
 }
 
 static int next(void) {
-    int c;
+    int c, l;
 
     if (Putback) {
         c = Putback;
@@ -19,6 +19,26 @@ static int next(void) {
     }
 
     c = fgetc(Infile);
+
+    while (c == '#') {
+        scan(&Token);
+        if (Token.token != T_INTLIT)
+            fatals("Expecting pre-processor line number, got:", Text);
+        l = Token.intvalue;
+
+        scan(&Token);
+        if (Token.token != T_STRLIT)
+            fatals("Expecting pre-processor file name, got:", Text);
+        if (Text[0] != '<') {
+            if (strcmp(Text, Infilename))
+                Infilename = strdup(Text);
+            Line = l;
+        }
+
+        while ((c = fgetc(Infile)) != '\n')
+            c = fgetc(Infile);
+    }
+
     if (c == '\n')
         Line++;
 
@@ -150,6 +170,8 @@ static int keyword(char *s) {
         case 's':
             if (!strcmp(s, "struct"))
                 return (T_STRUCT);
+            break;
+        case 't':
             if (!strcmp(s, "typedef"))
                 return (T_TYPEDEF);
             break;

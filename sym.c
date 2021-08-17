@@ -84,9 +84,8 @@ struct symtable *addenum(char *name, int class, int value) {
     return (sym);
 }
 
-struct symtable *addtypedef(char *name, int type, struct symtable *ctype,
-                int stype, int size) {
-    struct symtable *sym = newsym(name, type, ctype, stype, C_TYPEDEF, size, 0);
+struct symtable *addtypedef(char *name, int type, struct symtable *ctype) {
+    struct symtable *sym = newsym(name, type, ctype, 0, C_TYPEDEF, 0, 0);
     appendsym(&Typehead, &Typetail, sym);
     return (sym);
 }
@@ -150,9 +149,8 @@ struct symtable *findenumval(char *s) {
 }
 
 struct symtable *findtypedef(char *s) {
-
+    return (findsyminlist(s, Typehead, 0));
 }
-
 
 void clear_symtable(void) {
     Globhead = Globtail = NULL;
@@ -167,6 +165,5 @@ void clear_symtable(void) {
 
 void freeloclsyms(void) {
     Loclhead = Locltail = NULL;
-    Parmhead = Parmtail = NULL;
     Functionid = NULL;
 }

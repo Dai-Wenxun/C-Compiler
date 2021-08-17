@@ -92,15 +92,22 @@ static struct ASTnode *return_statement(void) {
 }
 
 static struct ASTnode *single_statement(void) {
-    int type;
+    int type, class = C_LOCAL;
     struct symtable *ctype;
+    struct symtable *s;
 
     switch (Token.token) {
+        case T_IDENT:
+            if (findtypedef(Text) == NULL)
+                return (binexpr(0));
         case T_CHAR:
         case T_INT:
         case T_LONG:
         case T_STRUCT:
-            type = parse_type(&ctype);
+        case T_UNION:
+        case T_ENUM:
+        case T_TYPEDEF:
+            type = parse_type(&ctype, &class);
             ident();
             var_declaration(type, ctype, C_LOCAL);
             semi();
