@@ -102,8 +102,7 @@ struct symtable *addstruct(char *name, int type, struct symtable *ctype,
 struct symtable *addunion(char *name, int type, struct symtable *ctype,
                 int stype, int size);
 struct symtable *addenum(char *name, int class, int value);
-struct symtable *addtypedef(char *name, int type, struct symtable *ctype,
-                int stype, int size);
+struct symtable *addtypedef(char *name, int type, struct symtable *ctype);
 struct symtable *findglob(char *s);
 struct symtable *findlocl(char *s);
 struct symtable *findsymbol(char *s);
@@ -118,7 +117,7 @@ void freeloclsyms(void);
 
 
 // decl.c
-int parse_type(struct symtable **ctype);
+int parse_type(struct symtable **ctype, int *class);
 struct symtable *var_declaration(int type, struct symtable *ctype, int class);
 void global_declarations(void);
 

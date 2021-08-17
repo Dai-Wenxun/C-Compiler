@@ -8,6 +8,7 @@ extern_ int	Putback;
 extern_ struct symtable *Functionid;
 extern_ FILE *Infile;
 extern_ FILE *Outfile;
+extern_ char *Infilename;
 extern_ char *Outfilename;
 extern_ struct token Token;
 extern_ char Text[TEXTLEN + 1];

@@ -21,8 +21,8 @@ void cgdataseg(void) {
 static int localOffset;
 static int stackOffset;
 
-static int newlocaloffset(int type) {
-    localOffset += (cgprimsize(type) > 4) ? cgprimsize(type) : 4;
+static int newlocaloffset(int type, struct symtable *ctype) {
+    localOffset += (typesize(type, ctype) > 4) ? typesize(type, ctype) : 4;
 
     return (-localOffset);
 }
@@ -90,13 +90,13 @@ void cgfuncpreamble(struct symtable *sym) {
             parm->posn = paramOffset;
             paramOffset += 8;
         } else {
-            parm->posn = newlocaloffset(parm->type);
+            parm->posn = newlocaloffset(parm->type, parm->ctype);
             cgstorlocal(paramReg--, parm);
         }
     }
 
     for (locvar = Loclhead; locvar != NULL; locvar = locvar->next) {
-        locvar->posn = newlocaloffset(locvar->type);
+        locvar->posn = newlocaloffset(locvar->type, locvar->ctype);
     }
 
     stackOffset = (localOffset + 15) & ~15;
@@ -491,7 +491,7 @@ void cgglobsym(struct symtable *node) {
 
     cgdataseg();
     fprintf(Outfile, "\t.globl\t%s\n", node->name);
-    fprintf(Outfile, "%s:", node->name);
+    fprintf(Outfile, "%s:\n", node->name);
 
     switch (size) {
         case 1:
