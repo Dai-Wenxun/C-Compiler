@@ -26,6 +26,8 @@ char *alter_suffix(char *str, char suffix) {
 }
 
 static char *do_compile(char *filename) {
+//    char cmd[TEXTLEN];
+
     Outfilename = alter_suffix(filename, 's');
 
     if (Outfilename == NULL) {
@@ -33,10 +35,16 @@ static char *do_compile(char *filename) {
         exit(1);
     }
 
+//    snprintf(cmd, TEXTLEN, "%s %s %s", CPPCMD, INCDIR, filename);
+//    if ((Infile = popen(cmd, "r")) == NULL) {
+//        fprintf(stderr, "Unable to open %s: %s\n", filename, strerror(errno));
+//        exit(1);
+//    }
     if ((Infile = fopen(filename, "r")) == NULL) {
         fprintf(stderr, "Unable to open %s: %s\n", filename, strerror(errno));
         exit(1);
     }
+    Infilename = filename;
 
     if ((Outfile = fopen(Outfilename, "w")) == NULL) {
         fprintf(stderr, "Unable to create %s: %s\n", Outfilename, strerror(errno));

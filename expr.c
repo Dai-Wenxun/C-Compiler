@@ -85,7 +85,7 @@ static struct ASTnode *member_access(int withpointer) {
         fatals("Undeclared variable", Text);
 
     if (withpointer)
-        left = mkastleaf(A_IDENT, pointer_to(compvar->type), compvar, 0);
+        left = mkastleaf(A_IDENT, compvar->type, compvar, 0);
     else
         left = mkastleaf(A_ADDR, compvar->type, compvar, 0);
 
@@ -113,6 +113,12 @@ static struct ASTnode *member_access(int withpointer) {
 static struct ASTnode *postfix(void) {
     struct ASTnode *n;
     struct symtable *varptr;
+    struct symtable *enumptr;
+
+    if ((enumptr = findenumval(Text)) != NULL) {
+        scan(&Token);
+        return (mkastleaf(A_INTLIT, P_INT, NULL, enumptr->posn));
+    }
 
     scan(&Token);
 

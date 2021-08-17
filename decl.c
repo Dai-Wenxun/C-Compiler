@@ -7,7 +7,7 @@ static void enum_declaration(void);
 int typedef_declaration(struct symtable **ctype);
 int type_of_typedef(char *name, struct symtable **ctype);
 
-int parse_type(struct symtable **ctype) {
+int parse_type(struct symtable **ctype, int *class) {
     int type;
     *ctype = NULL;
 
@@ -48,6 +48,7 @@ int parse_type(struct symtable **ctype) {
                 type = -1;
             break;
         case T_TYPEDEF:
+            *class = C_TYPEDEF;
             type = typedef_declaration(ctype);
             if (Token.token == T_SEMI)
                 type = -1;
@@ -251,12 +252,13 @@ struct symtable *composite_declaration(int type) {
     offset = typesize(m->type, m->ctype);
 
     for (m = m->next; m != NULL; m = m->next) {
-        if (type == P_STRUCT)
+        if (type == P_STRUCT) {
             m->posn = genalign(m->type, offset, 1);
-        else
+            offset = m->posn + (typesize(m->type, m->ctype)>4 ? typesize(m->type, m->ctype) : 4);
+        } else {
             m->posn = 0;
-
-        offset = m->posn + (typesize(m->type, m->ctype)>4 ? typesize(m->type, m->ctype) : 4);
+            offset = typesize(m->type, m->ctype) > offset ? typesize(m->type, m->ctype) : offset;
+        }
     }
 
     ctype->size = offset;
@@ -287,7 +289,7 @@ static void enum_declaration(void) {
     if (etype != NULL)
         fatals("enum type redeclared:", etype->name);
     else
-        etype = addenum(name, C_ENUMTYPE, 0);
+        addenum(name, C_ENUMTYPE, 0);
 
     while (1) {
         ident();
@@ -305,11 +307,12 @@ static void enum_declaration(void) {
             scan(&Token);
         }
 
-        etype = addenum(name, C_ENUMVAL, intval++);
+        addenum(name, C_ENUMVAL, intval++);
         if (Token.token == T_RBRACE)
             break;
         comma();
     }
+    scan(&Token);
 }
 
 int typedef_declaration(struct symtable **ctype) {
@@ -321,7 +324,7 @@ int typedef_declaration(struct symtable **ctype) {
 
     if (findtypedef(Text) != NULL)
         fatals("redefinition of typedef", Text);
-    addtypedef(Text, type, *ctype, 0, 0);
+    addtypedef(Text, type, *ctype);
     scan(&Token);
     return (type);
 }
