@@ -90,7 +90,7 @@ void fatalc(char *s, int c);
 
 // sym.c
 struct symtable *addglob(char *name, int type, struct symtable *ctype,
-                int stype, int size);
+                int stype, int class, int size);
 struct symtable *addlocl(char *name, int type, struct symtable *ctype,
                 int stype, int size) ;
 struct symtable *addparm(char *name, int type, struct symtable *ctype,

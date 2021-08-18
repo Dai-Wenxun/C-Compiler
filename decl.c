@@ -8,7 +8,18 @@ int typedef_declaration(struct symtable **ctype);
 int type_of_typedef(char *name, struct symtable **ctype);
 
 int parse_type(struct symtable **ctype, int *class) {
-    int type;
+    int type, exstatic = 1;
+
+    while (exstatic) {
+        switch (Token.token) {
+            case T_EXTERN:
+                *class = C_EXTERN;
+                scan(&Token);
+                break;
+            default:
+                exstatic = 0;
+        }
+    }
     *ctype = NULL;
 
     switch (Token.token) {
@@ -75,6 +86,7 @@ struct symtable *var_declaration(int type, struct symtable *ctype, int class) {
 
     switch (class) {
         case C_GLOBAL:
+        case C_EXTERN:
             if (findglob(Text) != NULL)
                 fatals("Duplicate global variable declaration", Text);
             break;
@@ -95,7 +107,8 @@ struct symtable *var_declaration(int type, struct symtable *ctype, int class) {
         if (Token.token == T_INTLIT) {
             switch (class) {
                 case C_GLOBAL:
-                    sym = addglob(Text, pointer_to(type), ctype, S_ARRAY, Token.intvalue);
+                case C_EXTERN:
+                    sym = addglob(Text, pointer_to(type), ctype, S_ARRAY, class, Token.intvalue);
                     break;
                 case C_LOCAL:
                 case C_PARAM:
@@ -110,7 +123,8 @@ struct symtable *var_declaration(int type, struct symtable *ctype, int class) {
     } else {
         switch (class) {
             case C_GLOBAL:
-                sym = addglob(Text, type, ctype, S_VARIABLE, 1);
+            case C_EXTERN:
+                sym = addglob(Text, type, ctype, S_VARIABLE, class, 1);
                 break;
             case C_LOCAL:
                 sym = addlocl(Text, type, ctype, S_VARIABLE, 1);
@@ -137,7 +151,7 @@ static int var_declaration_list(struct symtable *funcsym, int class,
         protoptr = funcsym->member;
 
     while (Token.token != end_token) {
-        type = parse_type(&ctype);
+        type = parse_type(&ctype, &class);
         ident();
 
         if (protoptr != NULL) {
@@ -173,7 +187,7 @@ static struct ASTnode *function_declaration(int type) {
 
     if (oldfuncsym == NULL) {
         endlabel = genlabel();
-        newfuncsym = addglob(Text, type, NULL, S_FUNCTION, endlabel);
+        newfuncsym = addglob(Text, type, NULL, S_FUNCTION, C_GLOBAL, endlabel);
     }
 
     lparen();
@@ -316,11 +330,11 @@ static void enum_declaration(void) {
 }
 
 int typedef_declaration(struct symtable **ctype) {
-    int type;
+    int type, class = 0;
 
     scan(&Token);
 
-    type = parse_type(ctype);
+    type = parse_type(ctype, &class);
 
     if (findtypedef(Text) != NULL)
         fatals("redefinition of typedef", Text);
@@ -344,13 +358,13 @@ int type_of_typedef(char *name, struct symtable **ctype) {
 void global_declarations(void) {
     struct ASTnode *tree;
     struct symtable *ctype;
-    int type;
+    int type, class = C_GLOBAL;
 
     while (1) {
         if (Token.token == T_EOF)
             break;
 
-        type = parse_type(&ctype);
+        type = parse_type(&ctype, &class);
         if (type == -1) {
             semi();
             continue;
@@ -371,7 +385,7 @@ void global_declarations(void) {
 
             freeloclsyms();
         } else {
-            var_declaration(type, ctype, C_GLOBAL);
+            var_declaration(type, ctype, class);
             semi();
         }
     }

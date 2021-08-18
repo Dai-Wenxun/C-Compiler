@@ -94,7 +94,6 @@ static struct ASTnode *return_statement(void) {
 static struct ASTnode *single_statement(void) {
     int type, class = C_LOCAL;
     struct symtable *ctype;
-    struct symtable *s;
 
     switch (Token.token) {
         case T_IDENT:
@@ -109,7 +108,7 @@ static struct ASTnode *single_statement(void) {
         case T_TYPEDEF:
             type = parse_type(&ctype, &class);
             ident();
-            var_declaration(type, ctype, C_LOCAL);
+            var_declaration(type, ctype, class);
             semi();
             return (NULL);
         case T_IF:

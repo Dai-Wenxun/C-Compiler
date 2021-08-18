@@ -24,9 +24,9 @@ enum {
 
 enum {
     C_GLOBAL = 1,
+    C_EXTERN,
     C_LOCAL,
     C_PARAM,
-    C_EXTERN,
     C_STRUCT,
     C_UNION,
     C_MEMBER,
@@ -54,12 +54,12 @@ enum {
   T_VOID, T_CHAR, T_INT, T_LONG, T_STRUCT, T_UNION, T_ENUM,    //29
 
   // Other keywords
-  T_IF, T_ELSE, T_WHILE, T_FOR, T_RETURN, T_TYPEDEF,        //35
+  T_IF, T_ELSE, T_WHILE, T_FOR, T_RETURN, T_TYPEDEF, T_EXTERN,      //36
 
   // Structural tokens
-  T_INTLIT, T_STRLIT, T_IDENT,      //38
-  T_LBRACE, T_RBRACE, T_LPAREN, T_RPAREN, T_LBRACKET, T_RBRACKET,   //44
-  T_SEMI, T_COMMA, T_DOT, T_ARROW       //48
+  T_INTLIT, T_STRLIT, T_IDENT,      //39
+  T_LBRACE, T_RBRACE, T_LPAREN, T_RPAREN, T_LBRACKET, T_RBRACKET,   //45
+  T_SEMI, T_COMMA, T_DOT, T_ARROW       //49
 };
 
 enum {
