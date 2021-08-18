@@ -4,8 +4,8 @@
 
 static struct symtable *composite_declaration(int type);
 static void enum_declaration(void);
-int typedef_declaration(struct symtable **ctype);
-int type_of_typedef(char *name, struct symtable **ctype);
+static int typedef_declaration(struct symtable **ctype);
+static int type_of_typedef(char *name, struct symtable **ctype);
 
 int parse_type(struct symtable **ctype, int *class) {
     int type, exstatic = 1;
@@ -209,6 +209,7 @@ static struct ASTnode *function_declaration(int type) {
 
     Functionid = oldfuncsym;
 
+    Looplevel = 0;
     tree = compound_statement();
 
     if (type != P_VOID) {
@@ -223,7 +224,7 @@ static struct ASTnode *function_declaration(int type) {
     return (mkastunary(A_FUNCTION, type, tree, oldfuncsym, endlabel));
 }
 
-struct symtable *composite_declaration(int type) {
+static struct symtable *composite_declaration(int type) {
     struct symtable *ctype = NULL;
     struct symtable *m;
     int offset;
@@ -329,7 +330,7 @@ static void enum_declaration(void) {
     scan(&Token);
 }
 
-int typedef_declaration(struct symtable **ctype) {
+static int typedef_declaration(struct symtable **ctype) {
     int type, class = 0;
 
     scan(&Token);
@@ -343,7 +344,7 @@ int typedef_declaration(struct symtable **ctype) {
     return (type);
 }
 
-int type_of_typedef(char *name, struct symtable **ctype) {
+static int type_of_typedef(char *name, struct symtable **ctype) {
     struct symtable *t;
 
     t = findtypedef(name);
@@ -376,12 +377,7 @@ void global_declarations(void) {
 
             if (tree == NULL)
                 continue;
-
-            if (O_dumpAST) {
-                dumpAST(tree, NOLABEL, 0);
-                fprintf(stdout, "\n\n");
-            }
-            genAST(tree, NOLABEL, 0);
+            genAST(tree, NOLABEL, NOLABEL, NOLABEL, 0);
 
             freeloclsyms();
         } else {

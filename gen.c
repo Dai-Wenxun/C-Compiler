@@ -7,17 +7,17 @@ int genlabel(void) {
     return (id++);
 }
 
-static int genIF(struct ASTnode *n) {
+static int genIF(struct ASTnode *n, int looptoplabel, int loopendlabel) {
     int Lfalse, Lend;
 
     Lfalse = genlabel();
     if (n->right)
         Lend = genlabel();
 
-    genAST(n->left, Lfalse, n->op);
+    genAST(n->left, Lfalse, NOLABEL, NOLABEL, n->op);
     genfreeregs();
 
-    genAST(n->mid, NOLABEL, n->op);
+    genAST(n->mid, NOLABEL, looptoplabel, loopendlabel, n->op);
     genfreeregs();
 
     if (n->right)
@@ -26,7 +26,7 @@ static int genIF(struct ASTnode *n) {
     cglabel(Lfalse);
 
     if (n->right) {
-        genAST(n->right, NOLABEL, n->op);
+        genAST(n->right, NOLABEL, looptoplabel, loopendlabel, n->op);
         genfreeregs();
         cglabel(Lend);
     }
@@ -42,10 +42,10 @@ static int genWHILE(struct ASTnode *n) {
 
     cglabel(Lstart);
 
-    genAST(n->left, Lend, n->op);
+    genAST(n->left, Lend, NOLABEL, NOLABEL, n->op);
     genfreeregs();
 
-    genAST(n->right, NOLABEL, n->op);
+    genAST(n->right, NOLABEL, Lstart, Lend, n->op);
     genfreeregs();
 
     cgjump(Lstart);
@@ -60,7 +60,7 @@ static int gen_funccall(struct ASTnode *n) {
     int numargs = 0;
 
     while (gluetree) {
-        reg = genAST(gluetree->right, NOLABEL, gluetree->op);
+        reg = genAST(gluetree->right, NOLABEL, NOLABEL, NOLABEL, gluetree->op);
 
         cgcopyarg(reg, gluetree->size);
 
@@ -73,33 +73,34 @@ static int gen_funccall(struct ASTnode *n) {
     return (cgcall(n->sym, numargs));
 }
 
-int genAST(struct ASTnode *n, int label, int parentASTop) {
+int genAST(struct ASTnode *n, int iflabel, int looptoplabel,
+            int loopendlabel, int parentASTop) {
     int leftreg, rightreg;
 
     switch (n->op) {
         case A_IF:
-            return (genIF(n));
+            return (genIF(n, looptoplabel, loopendlabel));
         case A_WHILE:
             return (genWHILE(n));
         case A_FUNCCALL:
             return (gen_funccall(n));
         case A_GLUE:
-            genAST(n->left, NOLABEL, n->op);
+            genAST(n->left, NOLABEL, looptoplabel, loopendlabel,n->op);
             genfreeregs();
-            genAST(n->right, NOLABEL, n->op);
+            genAST(n->right, NOLABEL, looptoplabel, loopendlabel, n->op);
             genfreeregs();
             return (NOREG);
         case A_FUNCTION:
             cgfuncpreamble(n->sym);
-            genAST(n->left, NOLABEL, n->op);
+            genAST(n->left, NOLABEL, NOLABEL, NOLABEL, n->op);
             cgfuncpostamble(n->sym);
             return (NOREG);
     }
 
     if (n->left)
-        leftreg = genAST(n->left, NOLABEL, n->op);
+        leftreg = genAST(n->left, NOLABEL, NOLABEL, NOLABEL, n->op);
     if (n->right)
-        rightreg = genAST(n->right, NOLABEL, n->op);
+        rightreg = genAST(n->right, NOLABEL, NOLABEL, NOLABEL, n->op);
 
     switch (n->op) {
         case A_ASSIGN:
@@ -128,7 +129,7 @@ int genAST(struct ASTnode *n, int label, int parentASTop) {
         case A_LE:
         case A_GE:
             if (parentASTop == A_IF || parentASTop == A_WHILE)
-                return (cgcompare_and_jump(n->op, leftreg, rightreg, label));
+                return (cgcompare_and_jump(n->op, leftreg, rightreg, iflabel));
             else
                 return (cgcompare_and_set(n->op, leftreg, rightreg));
         case A_LSHIFT:
@@ -170,7 +171,7 @@ int genAST(struct ASTnode *n, int label, int parentASTop) {
         case A_LOGNOT:
             return (cglognot(leftreg));
         case A_TOBOOL:
-            return (cgboolean(leftreg, parentASTop, label));
+            return (cgboolean(leftreg, parentASTop, iflabel));
         case A_RETURN:
             cgreturn(leftreg, Functionid);
             return (NOREG);
@@ -192,6 +193,12 @@ int genAST(struct ASTnode *n, int label, int parentASTop) {
                     rightreg = cgloadint(n->size, P_INT);
                     return (cgmul(leftreg, rightreg));
             }
+        case A_BREAK:
+            cgjump(loopendlabel);
+            return (NOREG);
+        case A_CONTINUE:
+            cgjump(looptoplabel);
+            return (NOREG);
         default:
             fatald("Unknown AST operator", n->op);
     }

@@ -20,24 +20,24 @@ static int next(void) {
 
     c = fgetc(Infile);
 
-    while (c == '#') {
-        scan(&Token);
-        if (Token.token != T_INTLIT)
-            fatals("Expecting pre-processor line number, got:", Text);
-        l = Token.intvalue;
-
-        scan(&Token);
-        if (Token.token != T_STRLIT)
-            fatals("Expecting pre-processor file name, got:", Text);
-        if (Text[0] != '<') {
-            if (strcmp(Text, Infilename))
-                Infilename = strdup(Text);
-            Line = l;
-        }
-
-        while ((c = fgetc(Infile)) != '\n')
-            c = fgetc(Infile);
-    }
+//    while (c == '#') {
+//        scan(&Token);
+//        if (Token.token != T_INTLIT)
+//            fatals("Expecting pre-processor line number, got:", Text);
+//        l = Token.intvalue;
+//
+//        scan(&Token);
+//        if (Token.token != T_STRLIT)
+//            fatals("Expecting pre-processor file name, got:", Text);
+//        if (Text[0] != '<') {
+//            if (strcmp(Text, Infilename))
+//                Infilename = strdup(Text);
+//            Line = l;
+//        }
+//
+//        while ((c = fgetc(Infile)) != '\n')
+//            c = fgetc(Infile);
+//    }
 
     if (c == '\n')
         Line++;
@@ -139,9 +139,15 @@ static void scanident(int c) {
 
 static int keyword(char *s) {
     switch (*s) {
+        case 'b':
+            if (!strcmp(s, "break"))
+                return (T_BREAK);
+            break;
         case 'c':
             if (!strcmp(s, "char"))
                 return (T_CHAR);
+            if (!strcmp(s, "continue"))
+                return (T_CONTINUE);
             break;
         case 'e':
             if (!strcmp(s, "else"))
@@ -192,7 +198,6 @@ static int keyword(char *s) {
     }
     return (0);
 }
-
 
 int scan(struct token *t) {
     int c, tokentype;

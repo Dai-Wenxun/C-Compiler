@@ -36,7 +36,9 @@ static struct ASTnode *while_statement(void) {
         condAST = mkastunary(A_TOBOOL, condAST->type, condAST, NULL, 0);
     rparen();
 
+    Looplevel++;
     bodyAST = compound_statement();
+    Looplevel--;
 
     return (mkastnode(A_WHILE, P_NONE, condAST, NULL, bodyAST, NULL, 0));
 }
@@ -60,7 +62,9 @@ static struct ASTnode *for_statement(void) {
     postopAST = single_statement();
     rparen();
 
+    Looplevel++;
     bodyAST = compound_statement();
+    Looplevel--;
 
     tree = mkastnode(A_GLUE, P_NONE, bodyAST, NULL, postopAST, NULL, 0);
 
@@ -91,6 +95,22 @@ static struct ASTnode *return_statement(void) {
     return (tree);
 }
 
+static struct ASTnode *break_statement(void) {
+    if (Looplevel == 0)
+        fatal("no loop to break out from");
+    scan(&Token);
+    semi();
+    return (mkastleaf(A_BREAK, P_NONE, NULL, 0));
+}
+
+static struct ASTnode *continue_statement(void) {
+    if (Looplevel == 0)
+        fatal("no loop to continue to");
+    scan(&Token);
+    semi();
+    return (mkastleaf(A_CONTINUE, P_NONE, NULL, 0));
+}
+
 static struct ASTnode *single_statement(void) {
     int type, class = C_LOCAL;
     struct symtable *ctype;
@@ -119,6 +139,10 @@ static struct ASTnode *single_statement(void) {
             return (for_statement());
         case T_RETURN:
             return (return_statement());
+        case T_BREAK:
+            return (break_statement());
+        case T_CONTINUE:
+            return (continue_statement());
         default:
             return (binexpr(0));
     }

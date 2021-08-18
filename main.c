@@ -119,7 +119,6 @@ static void usage(char *prog) {
     fprintf(stderr, "       -v give verbose output of the compilation stages\n");
     fprintf(stderr, "       -c generate object files but don't link them\n");
     fprintf(stderr, "       -S generate assembly files but don't link them\n");
-    fprintf(stderr, "       -T dump the AST trees for each input file\n");
     fprintf(stderr, "       -o outfile, produce the outfile executable file\n");
     exit(1);
 }
@@ -131,7 +130,6 @@ int main(int argc, char* argv[]) {
     char *objlist[MAXOBJ];
     int i, objcnt = 0;
 
-    O_dumpAST = 0;
     O_keepasm = 0;
     O_assemble = 0;
     O_verbose = 0;
@@ -144,9 +142,6 @@ int main(int argc, char* argv[]) {
             switch (argv[i][j]) {
                 case 'o':
                     outfilename = argv[++i];
-                    break;
-                case 'T':
-                    O_dumpAST = 1;
                     break;
                 case 'c':
                     O_assemble = 1;
