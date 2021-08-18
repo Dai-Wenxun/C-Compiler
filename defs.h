@@ -54,7 +54,8 @@ enum {
   T_VOID, T_CHAR, T_INT, T_LONG, T_STRUCT, T_UNION, T_ENUM,    //29
 
   // Other keywords
-  T_IF, T_ELSE, T_WHILE, T_FOR, T_RETURN, T_TYPEDEF, T_EXTERN,      //36
+  T_IF, T_ELSE, T_WHILE, T_FOR, T_RETURN,       //34
+  T_TYPEDEF, T_EXTERN, T_BREAK, T_CONTINUE,     //38
 
   // Structural tokens
   T_INTLIT, T_STRLIT, T_IDENT,      //39
@@ -74,7 +75,7 @@ enum {
     A_INTLIT, A_STRLIT, A_IDENT,
     //
     A_RETURN, A_ADDR, A_DEREF,
-    A_WIDEN, A_SCALE,
+    A_WIDEN, A_SCALE, A_BREAK, A_CONTINUE
 };
 
 enum {

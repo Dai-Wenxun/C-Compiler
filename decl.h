@@ -10,11 +10,11 @@ struct ASTnode *mkastleaf(int op, int type,
                 struct symtable *sym, int intvalue);
 struct ASTnode *mkastunary(int op, int type, struct ASTnode *left,
                 struct symtable *sym, int intvalue);
-void dumpAST(struct ASTnode *n, int label, int level);
 
 // gen.c
 int genlabel(void);
-int genAST(struct ASTnode *n, int label, int parentASTop);
+int genAST(struct ASTnode *n, int iflabel, int looptoplabel,
+            int loopendlabel, int parentASTop);
 void genpreamble(void);
 void genpostamble(void);
 void genfreeregs(void);

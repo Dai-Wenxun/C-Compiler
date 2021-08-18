@@ -12,6 +12,7 @@ extern_ char *Infilename;
 extern_ char *Outfilename;
 extern_ struct token Token;
 extern_ char Text[TEXTLEN + 1];
+extern_ int Looplevel;
 
 extern_ struct symtable *Globhead, *Globtail;
 extern_ struct symtable *Loclhead, *Locltail;
@@ -22,7 +23,6 @@ extern_ struct symtable *Unionhead, *Uniontail;
 extern_ struct symtable *Enumhead, *Enumtail;
 extern_ struct symtable *Typehead, *Typetail;
 
-extern_ int O_dumpAST;
 extern_ int O_keepasm;
 extern_ int O_assemble;
 extern_ int O_dolink;
