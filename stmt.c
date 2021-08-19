@@ -96,7 +96,7 @@ static struct ASTnode *return_statement(void) {
 }
 
 static struct ASTnode *break_statement(void) {
-    if (Looplevel == 0)
+    if (Looplevel == 0 && Switchlevel == 0)
         fatal("no loop to break out from");
     scan(&Token);
     semi();
@@ -109,6 +109,80 @@ static struct ASTnode *continue_statement(void) {
     scan(&Token);
     semi();
     return (mkastleaf(A_CONTINUE, P_NONE, NULL, 0));
+}
+
+static struct ASTnode *switch_statement(void) {
+    struct ASTnode *left, *root, *c, *casetree=NULL, *casetail;
+    int inloop = 1, casecount = 0;
+    int seendefault = 0;
+    int ASTop, casevalue;
+
+    scan(&Token);
+    lparen();
+
+    left = binexpr(0);
+    rparen();
+    lbrace();
+
+    if (!inttype(left->type))
+        fatal("Switch expression is not of integer type");
+
+    root = mkastunary(A_SWITCH, P_NONE, left, NULL, 0);
+
+    Switchlevel++;
+    while (inloop) {
+        switch (Token.token) {
+            case T_RBRACE:
+//                if (casecount == 0)
+//                    fatal("No cases in switch");
+                inloop = 0;
+                break;
+            case T_CASE:
+            case T_DEFAULT:
+                if (seendefault)
+                    fatal("case or default after existing default");
+
+                if (Token.token  == T_DEFAULT) {
+                    ASTop = A_DEFAULT;
+                    seendefault = 1;
+                    scan(&Token);
+                } else {
+                    ASTop = A_CASE;
+                    casecount++;
+                    scan(&Token);
+                    left = binexpr(0);
+                    if (left->op != A_INTLIT)
+                        fatal("Expecting integer literal for case value");
+                    casevalue = left->intvalue;
+
+                    for (c = casetree; c != NULL; c = c->right)
+                        if (casevalue == c->intvalue)
+                            fatal("Duplicate case value");
+                }
+
+                match(T_COLON, ":");
+                left = compound_statement();
+
+                if (casetree == NULL) {
+                    casetree = casetail = mkastunary(ASTop, P_NONE, left, NULL, casevalue);
+                } else {
+                    casetail->right = mkastunary(ASTop, P_NONE, left, NULL, casevalue);
+                    casetail = casetail->right;
+                }
+                break;
+
+            default:
+                fatald("Unexpected token in switch", Token.token);
+        }
+    }
+    Switchlevel--;
+
+    root->intvalue = casecount;
+    root->right = casetree;
+
+    rbrace();
+
+    return (root);
 }
 
 static struct ASTnode *single_statement(void) {
@@ -143,6 +217,8 @@ static struct ASTnode *single_statement(void) {
             return (break_statement());
         case T_CONTINUE:
             return (continue_statement());
+        case T_SWITCH:
+            return (switch_statement());
         default:
             return (binexpr(0));
     }
