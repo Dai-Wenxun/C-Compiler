@@ -73,6 +73,40 @@ static int gen_funccall(struct ASTnode *n) {
     return (cgcall(n->sym, numargs));
 }
 
+static int genSWITCH(struct ASTnode *n) {
+    int *caseval, *caselabel;
+    int Ljumptop, Lend;
+    int i, reg, defaultlabel = 0;
+    struct ASTnode *c;
+
+    caseval = (int *)malloc((n->intvalue + 1) * sizeof(int));
+    caselabel = (int *)malloc((n->intvalue + 1) * sizeof(int));
+
+    Ljumptop = genlabel();
+    Lend = genlabel();
+    defaultlabel = Lend;
+
+    reg = genAST(n->left, NOLABEL, NOLABEL, NOLABEL, 0);
+    cgjump(Ljumptop);
+    genfreeregs();
+
+    for (i = 0, c = n->right; c != NULL; i++, c = c->right) {
+        caselabel[i] = genlabel();
+        caseval[i] = c->intvalue;
+        cglabel(caselabel[i]);
+        if (c->op == A_DEFAULT)
+            defaultlabel = caselabel[i];
+
+        genAST(c->left, NOLABEL, NOLABEL, Lend, 0);
+        genfreeregs();
+    }
+
+    cgjump(Lend);
+    cgswitch(reg, n->intvalue, Ljumptop, caselabel, caseval, defaultlabel);
+    cglabel(Lend);
+    return (NOREG);
+}
+
 int genAST(struct ASTnode *n, int iflabel, int looptoplabel,
             int loopendlabel, int parentASTop) {
     int leftreg, rightreg;
@@ -82,6 +116,8 @@ int genAST(struct ASTnode *n, int iflabel, int looptoplabel,
             return (genIF(n, looptoplabel, loopendlabel));
         case A_WHILE:
             return (genWHILE(n));
+        case A_SWITCH:
+            return (genSWITCH(n));
         case A_FUNCCALL:
             return (gen_funccall(n));
         case A_GLUE:
