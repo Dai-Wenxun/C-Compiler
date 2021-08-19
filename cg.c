@@ -61,6 +61,30 @@ static void free_register(int r) {
 
 void cgpreamble(void) {
     freeall_registers();
+    cgtextseg();
+
+    fprintf(Outfile,
+           "switch:\n"
+           "    pushq   %%rsi\n"
+           "    movq    %%rdx, %%rsi\n"   //%%rsi = switch table address
+           "    movq    %%rax, %%rbx\n"   //%%rbx = expression value
+           "    cld\n"
+           "    lodsq\n"               //Load qword at address (R)SI into RAX
+           "    movq    %%rax, %%rcx\n"
+           "next:\n"
+           "    lodsq\n"
+           "    movq    %%rax, %%rdx\n"
+           "    lodsq\n"
+           "    cmpq    %%rdx, %%rbx\n"
+           "    jnz     no\n"
+           "    popq    %%rsi\n"
+           "    jmp *%%rax\n"
+           "no:\n"
+           "    loop    next\n"
+           "    lodsq\n"
+           "    popq    %%rsi\n"
+           "    jmp *%%rax\n"
+           );
 }
 
 void cgpostamble(void) {
@@ -511,6 +535,7 @@ void cgglobsym(struct symtable *node) {
 
 void cgglobstr(int l, char *strvalue)   {
     char *cptr;
+    cgdataseg();
     cglabel(l);
     for (cptr = strvalue; *cptr; cptr++) {
         fprintf(Outfile, "\t.byte\t%d\n", *cptr);
@@ -560,4 +585,28 @@ void cglabel(int l) {
 
 void cgjump(int l) {
     fprintf(Outfile, "\tjmp\tL%d\n", l);
+}
+
+void cgswitch(int reg, int casecount, int toplabel,
+              int *caselabel, int *caseval, int defaultlabel) {
+    int i, label;
+
+    label = genlabel();
+    cglabel(label);
+
+    if (casecount == 0) {
+        caseval[0] = 0;
+        caselabel[0] = defaultlabel;
+        casecount = 1;
+    }
+
+    fprintf(Outfile, "\t.quad\t%d\n", casecount);
+    for (i = 0; i < casecount; ++i)
+        fprintf(Outfile, "\t.quad\t%d, L%d\n", caseval[i], caselabel[i]);
+    fprintf(Outfile, "\t.quad\tL%d\n", defaultlabel);
+
+    cglabel(toplabel);
+    fprintf(Outfile, "\tmovq\t%s, %%rax\n", reglist[reg]);
+    fprintf(Outfile, "\tleaq\tL%d(%%rip), %%rdx\n", label);
+    fprintf(Outfile, "\tjmp\tswitch\n");
 }
