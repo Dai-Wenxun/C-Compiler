@@ -306,7 +306,8 @@ struct ASTnode *binexpr(int ptp) {
 
     tokentype = Token.token;
     if (tokentype == T_SEMI || tokentype == T_RPAREN
-        || tokentype == T_RBRACKET || tokentype == T_COMMA) {
+        || tokentype == T_RBRACKET || tokentype == T_COMMA
+        || tokentype == T_COLON) {
         left->rvalue = 1;
         return (left);
     }
@@ -347,7 +348,8 @@ struct ASTnode *binexpr(int ptp) {
 
         tokentype = Token.token;
         if (tokentype == T_SEMI || tokentype == T_RPAREN
-            || tokentype == T_RBRACKET || tokentype == T_COMMA) {
+            || tokentype == T_RBRACKET || tokentype == T_COMMA
+            || tokentype == T_COLON) {
             left->rvalue = 1;
             return (left);
         }
