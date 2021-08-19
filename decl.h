@@ -67,6 +67,8 @@ int cgprimsize(int type);
 int cglign(int type, int offset, int direction);
 void cglabel(int l);
 void cgjump(int l);
+void cgswitch(int reg, int casecount, int toplabel,
+              int *caselabel, int *caseval, int defaultlabel);
 
 // expr.c
 struct ASTnode *binexpr(int ptp);

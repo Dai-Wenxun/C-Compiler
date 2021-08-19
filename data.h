@@ -13,6 +13,7 @@ extern_ char *Outfilename;
 extern_ struct token Token;
 extern_ char Text[TEXTLEN + 1];
 extern_ int Looplevel;
+extern_ int Switchlevel;
 
 extern_ struct symtable *Globhead, *Globtail;
 extern_ struct symtable *Loclhead, *Locltail;
