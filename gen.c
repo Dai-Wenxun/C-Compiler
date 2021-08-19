@@ -121,9 +121,9 @@ int genAST(struct ASTnode *n, int iflabel, int looptoplabel,
         case A_FUNCCALL:
             return (gen_funccall(n));
         case A_GLUE:
-            genAST(n->left, NOLABEL, looptoplabel, loopendlabel,n->op);
+            if (n->left != NULL) genAST(n->left, NOLABEL, looptoplabel, loopendlabel,n->op);
             genfreeregs();
-            genAST(n->right, NOLABEL, looptoplabel, loopendlabel, n->op);
+            if (n->right != NULL) genAST(n->right, NOLABEL, looptoplabel, loopendlabel, n->op);
             genfreeregs();
             return (NOREG);
         case A_FUNCTION:

@@ -2,26 +2,20 @@
 #include "data.h"
 #include "decl.h"
 
-static struct ASTnode *expression_list(void) {
+struct ASTnode *expression_list(int endtoken) {
     struct ASTnode *tree = NULL;
     struct ASTnode *child = NULL;
     int exprcount = 0;
 
-    while (Token.token != T_RPAREN) {
+    while (Token.token != endtoken) {
         child = binexpr(0);
         exprcount++;
 
         tree = mkastnode(A_GLUE, P_NONE, tree, NULL, child, NULL, exprcount);
 
-        switch (Token.token) {
-            case T_COMMA:
-                scan(&Token);
-                break;
-            case T_RPAREN:
-                break;
-            default:
-                fatald("Unexpected token in expression list", Token.token);
-        }
+        if (Token.token == endtoken) break;
+
+        comma();
     }
 
     return (tree);
@@ -35,7 +29,7 @@ static struct ASTnode *funccall(void) {
         fatals("Undeclared function", Text);
     lparen();
 
-    tree = expression_list();
+    tree = expression_list(T_RPAREN);
 
     tree = mkastunary(A_FUNCCALL, funcptr->type, tree, funcptr, 0);
 

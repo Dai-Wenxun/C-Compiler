@@ -71,6 +71,7 @@ void cgswitch(int reg, int casecount, int toplabel,
               int *caselabel, int *caseval, int defaultlabel);
 
 // expr.c
+struct ASTnode *expression_list(int endtoken);
 struct ASTnode *binexpr(int ptp);
 
 // stmt.c

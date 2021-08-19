@@ -51,7 +51,7 @@ static struct ASTnode *for_statement(void) {
     match(T_FOR, "for");
     lparen();
 
-    preopAST = single_statement();
+    preopAST = expression_list(T_SEMI);
     semi();
 
     condAST = binexpr(0);
@@ -59,7 +59,7 @@ static struct ASTnode *for_statement(void) {
         condAST = mkastunary(A_TOBOOL, condAST->type, condAST, NULL, 0);
     semi();
 
-    postopAST = single_statement();
+    postopAST = expression_list(T_RPAREN);
     rparen();
 
     Looplevel++;
