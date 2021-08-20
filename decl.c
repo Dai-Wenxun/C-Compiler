@@ -210,7 +210,10 @@ static struct ASTnode *function_declaration(int type) {
     Functionid = oldfuncsym;
 
     Looplevel = 0;
-    tree = compound_statement();
+    Switchlevel = 0;
+    lbrace();
+    tree = compound_statement(0);
+    rbrace();
 
     if (type != P_VOID) {
 
