@@ -15,11 +15,11 @@ static struct ASTnode *if_statement(void) {
         condAST = mkastunary(A_TOBOOL, condAST->type, condAST, NULL, 0);
     rparen();
 
-    trueAST = compound_statement();
+    trueAST = single_statement();
 
     if (Token.token == T_ELSE) {
         scan(&Token);
-        falseAST = compound_statement();
+        falseAST = single_statement();
     }
 
     return (mkastnode(A_IF, P_NONE, condAST, trueAST, falseAST, NULL, 0));
@@ -37,7 +37,7 @@ static struct ASTnode *while_statement(void) {
     rparen();
 
     Looplevel++;
-    bodyAST = compound_statement();
+    bodyAST = single_statement();
     Looplevel--;
 
     return (mkastnode(A_WHILE, P_NONE, condAST, NULL, bodyAST, NULL, 0));
@@ -63,7 +63,7 @@ static struct ASTnode *for_statement(void) {
     rparen();
 
     Looplevel++;
-    bodyAST = compound_statement();
+    bodyAST = single_statement();
     Looplevel--;
 
     tree = mkastnode(A_GLUE, P_NONE, bodyAST, NULL, postopAST, NULL, 0);
@@ -161,7 +161,7 @@ static struct ASTnode *switch_statement(void) {
                 }
 
                 match(T_COLON, ":");
-                left = compound_statement();
+                left = compound_statement(1);
 
                 if (casetree == NULL) {
                     casetree = casetail = mkastunary(ASTop, P_NONE, left, NULL, casevalue);
@@ -188,11 +188,21 @@ static struct ASTnode *switch_statement(void) {
 static struct ASTnode *single_statement(void) {
     int type, class = C_LOCAL;
     struct symtable *ctype;
+    struct ASTnode *stmt;
 
     switch (Token.token) {
+        case T_LBRACE:
+            lbrace();
+            stmt = compound_statement(0);
+            rbrace();
+            return (stmt);
+
         case T_IDENT:
-            if (findtypedef(Text) == NULL)
-                return (binexpr(0));
+            if (findtypedef(Text) == NULL) {
+                stmt = binexpr(0);
+                semi();
+                return stmt;
+            }
         case T_CHAR:
         case T_INT:
         case T_LONG:
@@ -220,21 +230,18 @@ static struct ASTnode *single_statement(void) {
         case T_SWITCH:
             return (switch_statement());
         default:
-            return (binexpr(0));
+            stmt = binexpr(0);
+            semi();
+            return (stmt);
     }
 }
 
-struct ASTnode *compound_statement(void) {
+struct ASTnode *compound_statement(int inswitch) {
     struct ASTnode *left = NULL;
     struct ASTnode *tree;
 
-    lbrace();
     while (1) {
-
         tree = single_statement();
-
-        if (tree != NULL && (tree->op == A_ASSIGN || tree->op == A_FUNCCALL))
-            semi();
 
         if (tree != NULL) {
             if (left == NULL)
@@ -243,9 +250,9 @@ struct ASTnode *compound_statement(void) {
                 left = mkastnode(A_GLUE, P_NONE, left, NULL, tree, NULL, 0);
         }
 
-        if (Token.token == T_RBRACE) {
-            rbrace();
+        if (Token.token == T_RBRACE)
             return (left);
-        }
+        if (inswitch && (Token.token == T_CASE || Token.token == T_DEFAULT))
+            return (left);
     }
 }
