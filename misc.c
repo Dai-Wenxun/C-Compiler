@@ -2,6 +2,20 @@
 #include "data.h"
 #include "decl.h"
 
+char *Tstring[] = {
+        "EOF", "=", "||", "&&", "|", "^", "&",
+        "==", "!=", "<", ">", "<=", ">=", "<<", ">>",
+        "+", "-", "*", "/", "++", "--", "~", "!",
+        "void", "char", "int", "long",
+        "struct", "union", "enum",
+        "if", "else", "while", "for", "return",
+        "typedef", "extern", "break", "continue",
+        "switch", "case", "default",
+        "intlit", "strlit", "identifier",
+        "{", "}", "(", ")", "[", "]",
+        ";", ",", ".", "->", ":"
+};
+
 void match(int t, char *what) {
     if (Token.token == t) {
         scan(&Token);
@@ -53,7 +67,7 @@ void fatals(char *s1, char *s2) {
 }
 
 void fatald(char *s, int d) {
-    fprintf(stderr, "%s: %d on line %d\n", s, d, Line);
+    fprintf(stderr, "%s: %s on line %d\n", s, Tstring[d], Line);
     fclose(Outfile);
     unlink(Outfilename);
     exit(1);
