@@ -97,14 +97,13 @@ struct symtable {
     struct symtable *ctype;
     int stype;
     int class;
+    int size;
+    int nelems;
     union {
-        int size;
         int endlabel;
-    };
-    union {
         int posn;
-        int nelems;
     };
+    int *initlist;
     struct symtable *next;
     struct symtable *member;
 };
