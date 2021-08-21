@@ -93,17 +93,15 @@ void fatalc(char *s, int c);
 
 // sym.c
 struct symtable *addglob(char *name, int type, struct symtable *ctype,
-                int stype, int class, int size);
+                int stype, int class, int nelems, int posn);
 struct symtable *addlocl(char *name, int type, struct symtable *ctype,
                 int stype, int size) ;
 struct symtable *addparm(char *name, int type, struct symtable *ctype,
                 int stype, int size);
 struct symtable *addmemb(char *name, int type, struct symtable *ctype,
-                int stype, int size);
-struct symtable *addstruct(char *name, int type, struct symtable *ctype,
-                int stype, int size);
-struct symtable *addunion(char *name, int type, struct symtable *ctype,
-                int stype, int size);
+                int stype, int nelems);
+struct symtable *addstruct(char *name);
+struct symtable *addunion(char *name);
 struct symtable *addenum(char *name, int class, int value);
 struct symtable *addtypedef(char *name, int type, struct symtable *ctype);
 struct symtable *findglob(char *s);
@@ -120,8 +118,7 @@ void freeloclsyms(void);
 
 
 // decl.c
-int parse_type(struct symtable **ctype, int *class);
-struct symtable *var_declaration(int type, struct symtable *ctype, int class);
+int declaration_list(struct symtable **ctype, int class, int et1, int et2);
 void global_declarations(void);
 
 // types.c
