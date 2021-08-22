@@ -4,7 +4,7 @@
 
 static struct symtable *composite_declaration(int type);
 static void enum_declaration(void);
-static void typedef_declaration(struct symtable **ctype);
+static void typedef_declaration(void);
 
 static struct symtable *symbol_declaration(int type, struct symtable *ctype, int class);
 
@@ -56,7 +56,7 @@ static int parse_type(struct symtable **ctype, int *class) {
                 type = -1;
             break;
         case T_TYPEDEF:
-            typedef_declaration(ctype);
+            typedef_declaration();
             type = -1;
             break;
         default:
@@ -274,18 +274,22 @@ static void enum_declaration(void) {
     rbrace();
 }
 
-static void typedef_declaration(struct symtable **ctype) {
+static void typedef_declaration(void) {
+    struct symtable *ctype;
     int type;
     int class = C_TYPEDEF;
 
     scan(&Token);
 
-    type = parse_stars(parse_type(ctype, &class));
+    type = parse_stars(parse_type(&ctype, &class));
+
+    if (findtypedef(Text) != NULL)
+        fatals("redefinition of typedef", Text);
+
     ident();
 
-    addtypedef(Text, type, *ctype);
+    addtypedef(Text, type, ctype);
 }
-
 
 static struct symtable *symbol_declaration(int type, struct symtable *ctype,
                                            int class) {
