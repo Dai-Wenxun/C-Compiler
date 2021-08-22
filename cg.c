@@ -61,30 +61,30 @@ static void free_register(int r) {
 
 void cgpreamble(void) {
     freeall_registers();
-    cgtextseg();
+//    cgtextseg();
 
-    fprintf(Outfile,
-           "switch:\n"
-           "    pushq   %%rsi\n"
-           "    movq    %%rdx, %%rsi\n"   //%%rsi = switch table address
-           "    movq    %%rax, %%rbx\n"   //%%rbx = expression value
-           "    cld\n"
-           "    lodsq\n"               //Load qword at address (R)SI into RAX
-           "    movq    %%rax, %%rcx\n"
-           "next:\n"
-           "    lodsq\n"
-           "    movq    %%rax, %%rdx\n"
-           "    lodsq\n"
-           "    cmpq    %%rdx, %%rbx\n"
-           "    jnz     no\n"
-           "    popq    %%rsi\n"
-           "    jmp *%%rax\n"
-           "no:\n"
-           "    loop    next\n"
-           "    lodsq\n"
-           "    popq    %%rsi\n"
-           "    jmp *%%rax\n"
-           );
+//    fprintf(Outfile,
+//           "switch:\n"
+//           "    pushq   %%rsi\n"
+//           "    movq    %%rdx, %%rsi\n"   //%%rsi = switch table address
+//           "    movq    %%rax, %%rbx\n"   //%%rbx = expression value
+//           "    cld\n"
+//           "    lodsq\n"               //Load qword at address (R)SI into RAX
+//           "    movq    %%rax, %%rcx\n"
+//           "next:\n"
+//           "    lodsq\n"
+//           "    movq    %%rax, %%rdx\n"
+//           "    lodsq\n"
+//           "    cmpq    %%rdx, %%rbx\n"
+//           "    jnz     no\n"
+//           "    popq    %%rsi\n"
+//           "    jmp *%%rax\n"
+//           "no:\n"
+//           "    loop    next\n"
+//           "    lodsq\n"
+//           "    popq    %%rsi\n"
+//           "    jmp *%%rax\n"
+//           );
 }
 
 void cgpostamble(void) {
@@ -502,34 +502,44 @@ int cgshlconst(int r, int val) {
     return (r);
 }
 
-void cgglobsym(struct symtable *node) {
+void cgglobsym(struct symtable *sym) {
     int size;
+    int i, initvalue;
 
-    if (node == NULL)
+    if (sym == NULL)
         return;
 
-    if (node->stype == S_FUNCTION)
+    if (sym->stype == S_FUNCTION)
         return;
 
-    size = typesize(node->type, node->ctype);
+    size = typesize(sym->type, sym->ctype);
 
     cgdataseg();
-    fprintf(Outfile, "\t.globl\t%s\n", node->name);
-    fprintf(Outfile, "%s:\n", node->name);
+    fprintf(Outfile, "\t.globl\t%s\n", sym->name);
+    fprintf(Outfile, "%s:\n", sym->name);
 
-    switch (size) {
-        case 1:
-            fprintf(Outfile, "\t.byte\t0\n");
-            break;
-        case 4:
-            fprintf(Outfile, "\t.long\t0\n");
-            break;
-        case 8:
-            fprintf(Outfile, "\t.quad\t0\n");
-            break;
-        default:
-            for (int i = 0; i < size; ++i)
-                fprintf(Outfile, "\t.byte\t0\n");
+    for (i = 0; i < sym->nelems; i++) {
+        initvalue = 0;
+        if (sym->initlist != NULL)
+            initvalue = sym->initlist[i];
+
+        switch (size) {
+            case 1:
+                fprintf(Outfile, "\t.byte\t%d\n", initvalue);
+                break;
+            case 4:
+                fprintf(Outfile, "\t.long\t%d\n", initvalue);
+                break;
+            case 8:
+//                if (sym->initlist != NULL && type == pointer_to(P_CHAR))
+//                    fprintf(Outfile, "\t.quad\tL%d\n", initvalue);
+                fprintf(Outfile, "\t.quad\t%d\n", initvalue);
+                break;
+            default:
+//                for (i = 0; i < size; ++i)
+//                    fprintf(Outfile, "\t.byte\t0\n");
+                break;
+        }
     }
 }
 

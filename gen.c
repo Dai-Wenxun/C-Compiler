@@ -252,8 +252,8 @@ void genfreeregs(void) {
     freeall_registers();
 }
 
-void genglobsym(struct symtable *node) {
-    cgglobsym(node);
+void genglobsym(struct symtable *sym) {
+    cgglobsym(sym);
 }
 
 int genglobstr(char *strvalue) {

@@ -18,7 +18,7 @@ int genAST(struct ASTnode *n, int iflabel, int looptoplabel,
 void genpreamble(void);
 void genpostamble(void);
 void genfreeregs(void);
-void genglobsym(struct symtable *node);
+void genglobsym(struct symtable *sym);
 int genglobstr(char *strvalue);
 int genprimsize(int type);
 int genalign(int type, int offset, int direction);
@@ -61,7 +61,7 @@ int cgaddress(struct symtable *sym);            //verified
 int cgderef(int r, int type);                   //verified
 int cgwiden(int r, int oldtype, int newtype);
 int cgshlconst(int r, int val);
-void cgglobsym(struct symtable *node);
+void cgglobsym(struct symtable *sym);
 void cgglobstr(int l, char *strvalue);
 int cgprimsize(int type);
 int cglign(int type, int offset, int direction);
@@ -86,6 +86,7 @@ void lparen(void);
 void rparen(void);
 void ident(void);
 void comma(void);
+void warn(char *s);
 void fatal(char *s);
 void fatals(char *s1, char *s2);
 void fatald(char *s, int d);

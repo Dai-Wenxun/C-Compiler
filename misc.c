@@ -52,6 +52,10 @@ void comma(void) {
     match(T_COMMA, "comma");
 }
 
+void warn(char *s) {
+    fprintf(stderr, "[Warning]: %s on line %d\n", s, Line);
+}
+
 void fatal(char *s) {
     fprintf(stderr, "%s on line %d\n", s, Line);
     fclose(Outfile);
