@@ -4,6 +4,7 @@
 
 static struct symtable *composite_declaration(int type);
 static void enum_declaration(void);
+static void typedef_declaration(struct symtable **ctype);
 
 static struct symtable *symbol_declaration(int type, struct symtable *ctype, int class);
 
@@ -11,6 +12,8 @@ static int parse_type(struct symtable **ctype, int *class) {
     int type;
 
     if (Token.token == T_EXTERN) {
+        if (*class == C_TYPEDEF)
+            fatal("multiple storage classes in declaration specifiers");
         *class = C_EXTERN;
         scan(&Token);
     }
@@ -51,6 +54,10 @@ static int parse_type(struct symtable **ctype, int *class) {
             enum_declaration();
             if (Token.token == T_SEMI)
                 type = -1;
+            break;
+        case T_TYPEDEF:
+            typedef_declaration(ctype);
+            type = -1;
             break;
         default:
             fatald("Illegal type, token", Token.token);
@@ -266,6 +273,19 @@ static void enum_declaration(void) {
 
     rbrace();
 }
+
+static void typedef_declaration(struct symtable **ctype) {
+    int type;
+    int class = C_TYPEDEF;
+
+    scan(&Token);
+
+    type = parse_stars(parse_type(ctype, &class));
+    ident();
+
+    addtypedef(Text, type, *ctype);
+}
+
 
 static struct symtable *symbol_declaration(int type, struct symtable *ctype,
                                            int class) {
