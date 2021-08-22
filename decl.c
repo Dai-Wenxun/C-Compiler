@@ -3,7 +3,7 @@
 #include "decl.h"
 
 static struct symtable *composite_declaration(int type);
-
+static void enum_declaration(void);
 
 static int parse_type(struct symtable **ctype, int *class) {
     int type;
@@ -44,6 +44,12 @@ static int parse_type(struct symtable **ctype, int *class) {
             if (Token.token == T_SEMI)
                 type = -1;
             break;
+        case T_ENUM:
+            type = P_INT;
+            enum_declaration();
+            if (Token.token == T_SEMI)
+                type = -1;
+            break;
         default:
             fatald("Illegal type, token", Token.token);
     }
@@ -62,8 +68,15 @@ static int parse_stars(int type) {
 }
 
 static int parse_literal(int type) {
+    struct symtable *etype;
+
     if ((type == pointer_to(P_CHAR)) && (Token.token == T_STRLIT))
         return (genglobstr(Text));
+
+    if ((Token.token == T_IDENT) && ((etype = findenumval(Text)) != NULL)) {
+        Token.token = T_INTLIT;
+        Token.intvalue = etype->posn;
+    }
 
     if (Token.token == T_INTLIT) {
         switch (type) {
@@ -77,7 +90,7 @@ static int parse_literal(int type) {
                 fatal("Type mismatch: integer literal vs. variable");
         }
     } else
-        fatal("Expecting an integer literal value");
+        fatal("initializer element is not constant");
 
     return (Token.intvalue);
 }
@@ -118,6 +131,7 @@ static struct symtable *scalar_declaration(char *varname, int type,
 static struct symtable *composite_declaration(int type) {
     struct symtable *ctype  = NULL;
     struct symtable *m;
+    char *name;
     int t, offset;
 
     // Skip the struct/union keyword
@@ -128,16 +142,17 @@ static struct symtable *composite_declaration(int type) {
             ctype = findstruct(Text);
         else
             ctype = findunion(Text);
+        name = strdup(Text);
         scan(&Token);
     }
 
     if (Token.token != T_LBRACE) {
         if (ctype == NULL)
-            fatals("unknown struct/union type", Text);
+            fatals("undefined struct/union type", name);
         return (ctype);
     }
 
-    if (ctype)
+    if (ctype != NULL)
         fatals("previously defined struct/union", Text);
 
     if (type == P_STRUCT)
@@ -185,11 +200,69 @@ static struct symtable *composite_declaration(int type) {
     return (ctype);
 }
 
+static void enum_declaration(void) {
+    struct symtable *etype = NULL;
+    char *name;
+    int intval = 0;
+
+    // Skip the enum keyword
+    scan(&Token);
+
+    if (Token.token == T_IDENT) {
+        etype = findenumtype(Text);
+        name = strdup(Text);
+        scan(&Token);
+    }
+
+    if (Token.token != T_LBRACE) {
+        if (etype == NULL)
+            fatals("undeclared enum type", name);
+        return;
+    }
+
+    if (etype != NULL)
+        fatals("enum type redeclared", name);
+
+    addenum(name, C_ENUMTYPE, 0);
+
+    lbrace();
+
+    while (Token.token != T_RBRACE) {
+        ident();
+        if (findenumval(Text) != NULL)
+            fatals("enum value redeclared", Text);
+
+        if (Token.token == T_ASSIGN) {
+            scan(&Token);
+            if (Token.token != T_INTLIT)
+                fatal("Expected int literal after '='");
+            intval = Token.intvalue;
+            scan(&Token);
+        }
+
+        addenum(Text, C_ENUMVAL, intval);
+        intval++;
+
+        if (Token.token == T_RBRACE)
+            break;
+
+        comma();
+    }
+
+    rbrace();
+}
+
+
+
+
+
+
+
 static struct symtable *symbol_declaration(int type, struct symtable *ctype,
                                            int class) {
     struct symtable *sym = NULL;
     char *varname = strdup(Text);
-
+    
     ident();
 
     switch (class) {

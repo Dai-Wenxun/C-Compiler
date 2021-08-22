@@ -57,28 +57,28 @@ void warn(char *s) {
 }
 
 void fatal(char *s) {
-    fprintf(stderr, "%s on line %d\n", s, Line);
+    fprintf(stderr, "[Error]: %s on line %d\n", s, Line);
     fclose(Outfile);
     unlink(Outfilename);
     exit(1);
 }
 
 void fatals(char *s1, char *s2) {
-    fprintf(stderr, "%s: %s on line %d\n", s1, s2, Line);
+    fprintf(stderr, "[Error]: %s: %s on line %d\n", s1, s2, Line);
     fclose(Outfile);
     unlink(Outfilename);
     exit(1);
 }
 
 void fatald(char *s, int d) {
-    fprintf(stderr, "%s: %s on line %d\n", s, Tstring[d], Line);
+    fprintf(stderr, "[Error]: %s: %s on line %d\n", s, Tstring[d], Line);
     fclose(Outfile);
     unlink(Outfilename);
     exit(1);
 }
 
 void fatalc(char *s, int c) {
-    fprintf(stderr, "%s: %c on line %d\n", s, c, Line);
+    fprintf(stderr, "[Error]: %s: %c on line %d\n", s, c, Line);
     fclose(Outfile);
     unlink(Outfilename);
     exit(1);
