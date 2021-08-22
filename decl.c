@@ -47,7 +47,8 @@ static int parse_stars(int type) {
 }
 
 static int parse_literal(int type) {
-
+    if ((type == pointer_to(P_CHAR)) && (Token.token == T_STRLIT))
+        return (genglobstr(Text));
 
     if (Token.token == T_INTLIT) {
         switch (type) {

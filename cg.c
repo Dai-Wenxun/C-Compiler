@@ -503,7 +503,7 @@ int cgshlconst(int r, int val) {
 }
 
 void cgglobsym(struct symtable *sym) {
-    int size;
+    int size, type;
     int i, initvalue;
 
     if (sym == NULL)
@@ -512,7 +512,8 @@ void cgglobsym(struct symtable *sym) {
     if (sym->stype == S_FUNCTION)
         return;
 
-    size = typesize(sym->type, sym->ctype);
+    size = sym->size;
+    type = sym->type;
 
     cgdataseg();
     fprintf(Outfile, "\t.globl\t%s\n", sym->name);
@@ -531,9 +532,10 @@ void cgglobsym(struct symtable *sym) {
                 fprintf(Outfile, "\t.long\t%d\n", initvalue);
                 break;
             case 8:
-//                if (sym->initlist != NULL && type == pointer_to(P_CHAR))
-//                    fprintf(Outfile, "\t.quad\tL%d\n", initvalue);
-                fprintf(Outfile, "\t.quad\t%d\n", initvalue);
+                if (sym->initlist != NULL && type == pointer_to(P_CHAR))
+                    fprintf(Outfile, "\t.quad\tL%d\n", initvalue);
+                else
+                    fprintf(Outfile, "\t.quad\t%d\n", initvalue);
                 break;
             default:
 //                for (i = 0; i < size; ++i)
