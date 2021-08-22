@@ -538,8 +538,8 @@ void cgglobsym(struct symtable *sym) {
                     fprintf(Outfile, "\t.quad\t%d\n", initvalue);
                 break;
             default:
-//                for (i = 0; i < size; ++i)
-//                    fprintf(Outfile, "\t.byte\t0\n");
+                for (i = 0; i < size; ++i)
+                    fprintf(Outfile, "\t.byte\t0\n");
                 break;
         }
     }

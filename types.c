@@ -4,7 +4,7 @@
 
 
 int inttype(int type) {
-    return ((type & 0xf) == 0);
+    return (((type & 0xf) == 0) && (type >= P_CHAR && type <= P_LONG));
 }
 
 int ptrtype(int type) {

@@ -210,7 +210,7 @@ static struct ASTnode *single_statement(void) {
         case T_UNION:
         case T_ENUM:
         case T_TYPEDEF:
-            declaration_list(&ctype, C_LOCAL, T_SEMI, T_EOF);
+            declaration_list(C_LOCAL, T_SEMI, T_EOF);
             semi();
             return (NULL);
         case T_IF:

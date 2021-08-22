@@ -119,7 +119,7 @@ void freeloclsyms(void);
 
 
 // decl.c
-int declaration_list(struct symtable **ctype, int class, int et1, int et2);
+int declaration_list(int class, int et1, int et2);
 void global_declarations(void);
 
 // types.c

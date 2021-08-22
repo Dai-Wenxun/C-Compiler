@@ -42,6 +42,9 @@ static struct symtable *newsym(char *name, int type, struct symtable *ctype,
 struct symtable *addglob(char *name, int type, struct symtable *ctype,
                 int stype, int class, int nelems, int posn) {
     struct symtable *sym = newsym(name, type, ctype, stype, class, nelems, posn);
+    if (type == P_STRUCT || type == P_UNION)
+        sym->size = ctype->size;
+
     appendsym(&Globhead, &Globtail, sym);
     return (sym);
 }

@@ -2,6 +2,8 @@
 #include "data.h"
 #include "decl.h"
 
+static struct symtable *composite_declaration(int type);
+
 
 static int parse_type(struct symtable **ctype, int *class) {
     int type;
@@ -28,6 +30,19 @@ static int parse_type(struct symtable **ctype, int *class) {
         case T_LONG:
             type = P_LONG;
             scan(&Token);
+            break;
+
+        case T_STRUCT:
+            type = P_STRUCT;
+            *ctype = composite_declaration(P_STRUCT);
+            if (Token.token == T_SEMI)
+                type = -1;
+            break;
+        case T_UNION:
+            type = P_UNION;
+            *ctype = composite_declaration(P_UNION);
+            if (Token.token == T_SEMI)
+                type = -1;
             break;
         default:
             fatald("Illegal type, token", Token.token);
@@ -77,6 +92,9 @@ static struct symtable *scalar_declaration(char *varname, int type,
         case C_EXTERN:
             sym = addglob(varname, type, ctype, S_VARIABLE, class, 1, 0);
             break;
+        case C_MEMBER:
+            sym = addmemb(varname, type, ctype, S_VARIABLE, 1);
+            break;
     }
 
     if (Token.token == T_ASSIGN) {
@@ -97,6 +115,76 @@ static struct symtable *scalar_declaration(char *varname, int type,
     return (sym);
 }
 
+static struct symtable *composite_declaration(int type) {
+    struct symtable *ctype  = NULL;
+    struct symtable *m;
+    int t, offset;
+
+    // Skip the struct/union keyword
+    scan(&Token);
+
+    if (Token.token == T_IDENT) {
+        if (type == P_STRUCT)
+            ctype = findstruct(Text);
+        else
+            ctype = findunion(Text);
+        scan(&Token);
+    }
+
+    if (Token.token != T_LBRACE) {
+        if (ctype == NULL)
+            fatals("unknown struct/union type", Text);
+        return (ctype);
+    }
+
+    if (ctype)
+        fatals("previously defined struct/union", Text);
+
+    if (type == P_STRUCT)
+        ctype = addstruct(Text);
+    else
+        ctype = addunion(Text);
+
+    lbrace();
+
+    while (1) {
+        t = declaration_list(C_MEMBER, T_SEMI, T_RBRACE);
+        if (t == -1)
+            fatal("Bad type in member list");
+        if (Token.token == T_SEMI)
+            semi();
+        if (Token.token == T_RBRACE)
+            break;
+    }
+
+    rbrace();
+
+    if (Membhead == NULL)
+        fatals("No members in struct", ctype->name);
+
+    ctype->member = Membhead;
+
+    Membhead = Membtail = NULL;
+
+    m = ctype->member;
+    m->posn = 0;
+
+    offset = typesize(m->type, m->ctype);
+
+    for (m = m->next; m != NULL; m = m->next) {
+        if (type == P_STRUCT) {
+            m->posn = genalign(m->type, offset, 1);
+            offset = m->posn + (typesize(m->type, m->ctype)>4 ? typesize(m->type, m->ctype) : 4);
+        } else {
+            m->posn = 0;
+            offset = typesize(m->type, m->ctype) > offset ? typesize(m->type, m->ctype) : offset;
+        }
+    }
+
+    ctype->size = offset;
+    return (ctype);
+}
+
 static struct symtable *symbol_declaration(int type, struct symtable *ctype,
                                            int class) {
     struct symtable *sym = NULL;
@@ -108,8 +196,11 @@ static struct symtable *symbol_declaration(int type, struct symtable *ctype,
         case C_GLOBAL:
         case C_EXTERN:
             if (findglob(varname) != NULL)
-                fatals("Duplicate global variable declaration", Text);
+                fatals("Duplicate global variable declaration", varname);
             break;
+        case C_MEMBER:
+            if (findmember(varname) != NULL)
+                fatals("Duplicate struct/union member declaration", varname);
     }
 
     sym = scalar_declaration(varname, type, ctype, class);
@@ -117,16 +208,17 @@ static struct symtable *symbol_declaration(int type, struct symtable *ctype,
     return (sym);
 }
 
-int declaration_list(struct symtable **ctype, int class, int et1, int et2) {
+int declaration_list(int class, int et1, int et2) {
+    struct symtable *ctype;
     int inittype, type;
-    struct symtable *sym;
 
-    inittype = parse_type(ctype, &class);
+    if ((inittype = parse_type(&ctype, &class)) == -1)
+        return (inittype);
 
     while (1) {
         type = parse_stars(inittype);
 
-        sym = symbol_declaration(type, *ctype, class);
+        symbol_declaration(type, ctype, class);
 
         if (Token.token == et1 || Token.token == et2)
             return (type);
@@ -137,9 +229,8 @@ int declaration_list(struct symtable **ctype, int class, int et1, int et2) {
 }
 
 void global_declarations(void) {
-    struct symtable *ctype;
     while (Token.token != T_EOF) {
-        declaration_list(&ctype, C_GLOBAL, T_SEMI, T_EOF);
+        declaration_list(C_GLOBAL, T_SEMI, T_EOF);
         if (Token.token == T_SEMI)
             scan(&Token);
     }
