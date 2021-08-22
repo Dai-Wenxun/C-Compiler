@@ -5,6 +5,8 @@
 static struct symtable *composite_declaration(int type);
 static void enum_declaration(void);
 
+static struct symtable *symbol_declaration(int type, struct symtable *ctype, int class);
+
 static int parse_type(struct symtable **ctype, int *class) {
     int type;
 
@@ -197,6 +199,19 @@ static struct symtable *composite_declaration(int type) {
     }
 
     ctype->size = offset;
+
+    while (Token.token != T_SEMI) {
+        if (type == P_STRUCT)
+            t = parse_stars(P_STRUCT);
+        else
+            t = parse_stars(P_UNION);
+        symbol_declaration(t, ctype, C_GLOBAL);
+
+        if (Token.token == T_SEMI)
+            break;
+        comma();
+    }
+
     return (ctype);
 }
 
@@ -251,12 +266,6 @@ static void enum_declaration(void) {
 
     rbrace();
 }
-
-
-
-
-
-
 
 static struct symtable *symbol_declaration(int type, struct symtable *ctype,
                                            int class) {
