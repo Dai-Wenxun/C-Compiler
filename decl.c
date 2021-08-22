@@ -5,7 +5,7 @@
 static struct symtable *composite_declaration(int type);
 static void enum_declaration(void);
 static void typedef_declaration(void);
-
+static int type_of_typedef(struct symtable **ctype);
 static struct symtable *symbol_declaration(int type, struct symtable *ctype, int class);
 
 static int parse_type(struct symtable **ctype, int *class) {
@@ -58,6 +58,9 @@ static int parse_type(struct symtable **ctype, int *class) {
         case T_TYPEDEF:
             typedef_declaration();
             type = -1;
+            break;
+        case T_IDENT:
+            type = type_of_typedef(ctype);
             break;
         default:
             fatald("Illegal type, token", Token.token);
@@ -289,6 +292,19 @@ static void typedef_declaration(void) {
     ident();
 
     addtypedef(Text, type, ctype);
+}
+
+static int type_of_typedef(struct symtable **ctype) {
+    struct symtable *t;
+
+    t = findtypedef(Text);
+
+    if (t == NULL)
+        fatals("unknown type", Text);
+
+    *ctype = t->ctype;
+    ident();
+    return (t->type);
 }
 
 static struct symtable *symbol_declaration(int type, struct symtable *ctype,
