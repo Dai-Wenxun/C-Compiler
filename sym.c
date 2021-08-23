@@ -58,9 +58,8 @@ struct symtable *addlocl(char *name, int type, struct symtable *ctype,
     return (sym);
 }
 
-struct symtable *addparm(char *name, int type, struct symtable *ctype,
-                int stype, int size) {
-    struct symtable *sym = newsym(name, type, ctype, stype, C_PARAM, size, 0);
+struct symtable *addparm(char *name, int type, struct symtable *ctype, int stype) {
+    struct symtable *sym = newsym(name, type, ctype, stype, C_PARAM, 1, 0);
     appendsym(&Parmhead, &Parmtail, sym);
     return (sym);
 }
