@@ -12,8 +12,8 @@ static int parse_type(struct symtable **ctype, int *class) {
     int type;
 
     if (Token.token == T_EXTERN) {
-        if (*class == C_TYPEDEF)
-            fatal("multiple storage classes in declaration specifiers");
+        if (*class == C_TYPEDEF || *class == C_PARAM)
+            fatal("multiple storage classes conflict");
         *class = C_EXTERN;
         scan(&Token);
     }
@@ -116,6 +116,9 @@ static struct symtable *scalar_declaration(char *varname, int type,
         case C_GLOBAL:
         case C_EXTERN:
             sym = addglob(varname, type, ctype, S_VARIABLE, class, 1, 0);
+            break;
+        case C_PARAM:
+            sym = addparm(varname, type, ctype, S_VARIABLE);
             break;
         case C_MEMBER:
             sym = addmemb(varname, type, ctype, S_VARIABLE, 1);
@@ -307,6 +310,93 @@ static int type_of_typedef(struct symtable **ctype) {
     return (t->type);
 }
 
+static int param_declaration_list(struct symtable *oldfuncsym) {
+    struct symtable *protoptr = NULL;
+    int type;
+    int paramcnt = 0;
+
+    if (oldfuncsym != NULL)
+        protoptr = oldfuncsym->member;
+
+    while (Token.token != T_RPAREN) {
+        type = declaration_list(C_PARAM, T_COMMA, T_RPAREN);
+        if (type == -1)
+            fatal("Bad type in param list");
+
+        if (protoptr != NULL) {
+            if (protoptr->type != type)
+                fatals("Type doesn't match prototype for parameter",  Text);
+            if (strcmp(protoptr->name, Text))
+                protoptr->name = strdup(Text);
+            protoptr = protoptr->next;
+        }
+
+        paramcnt++;
+
+        if (Token.token == T_RPAREN)
+            break;
+
+        comma();
+        }
+
+    if ((oldfuncsym != NULL) && (paramcnt != oldfuncsym->nelems))
+        fatals("Parameter count mismatch for function", oldfuncsym->name);
+
+    return (paramcnt);
+}
+
+static struct symtable *function_declaration(int type, struct symtable *ctype) {
+    struct ASTnode *tree = NULL, *finalstmt;
+    struct symtable *oldfuncsym, *newfuncsym = NULL;
+    int endlabel, paramcnt;
+
+    if((oldfuncsym = findglob(Text)) != NULL)
+        if (oldfuncsym->stype != S_FUNCTION)
+            fatals("redeclared as different kind of symbol", Text);
+
+    if (oldfuncsym == NULL) {
+        endlabel = genlabel();
+        newfuncsym = addglob(Text, type, ctype, S_FUNCTION, C_GLOBAL, 0, endlabel);
+    }
+
+    lparen();
+    paramcnt = param_declaration_list(oldfuncsym);
+    rparen();
+
+    if (newfuncsym) {
+        newfuncsym->nelems = paramcnt;
+        newfuncsym->member = Parmhead;
+        oldfuncsym = newfuncsym;
+    }
+    Parmhead = Parmtail = NULL;
+
+    if (Token.token == T_SEMI)
+        return (oldfuncsym);
+
+    Functionid = oldfuncsym;
+
+    Looplevel = Switchlevel = 0;
+
+    lbrace();
+//    tree = compound_statement(0);
+    rbrace();
+
+//    if (type != P_VOID) {
+//        if (tree == NULL)
+//            fatal("No statements in function with non-void type");
+//
+//        finalstmt = (tree->op == A_GLUE) ? tree->right : tree;
+//        if (finalstmt == NULL || finalstmt->op != A_RETURN)
+//            fatal("No return for function with non-void type");
+//    }
+//    tree = mkastunary(A_FUNCTION, type, tree, oldfuncsym, endlabel);
+//
+//    genAST(tree, NOLABEL, NOLABEL, NOLABEL, 0);
+//    freeloclsyms();
+    return (oldfuncsym);
+}
+
+
 static struct symtable *symbol_declaration(int type, struct symtable *ctype,
                                            int class) {
     struct symtable *sym = NULL;
@@ -314,12 +404,18 @@ static struct symtable *symbol_declaration(int type, struct symtable *ctype,
     
     ident();
 
+    if (Token.token == T_LPAREN)
+        return (function_declaration(type, ctype));
+
     switch (class) {
         case C_GLOBAL:
         case C_EXTERN:
             if (findglob(varname) != NULL)
                 fatals("Duplicate global variable declaration", varname);
             break;
+        case C_PARAM:
+            if (findlocl(varname) != NULL)
+                fatals("Duplicate local variable declaration", varname);
         case C_MEMBER:
             if (findmember(varname) != NULL)
                 fatals("Duplicate struct/union member declaration", varname);

@@ -97,8 +97,7 @@ struct symtable *addglob(char *name, int type, struct symtable *ctype,
                 int stype, int class, int nelems, int posn);
 struct symtable *addlocl(char *name, int type, struct symtable *ctype,
                 int stype, int size) ;
-struct symtable *addparm(char *name, int type, struct symtable *ctype,
-                int stype, int size);
+struct symtable *addparm(char *name, int type, struct symtable *ctype, int stype);
 struct symtable *addmemb(char *name, int type, struct symtable *ctype,
                 int stype, int nelems);
 struct symtable *addstruct(char *name);
