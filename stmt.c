@@ -186,8 +186,6 @@ static struct ASTnode *switch_statement(void) {
 }
 
 static struct ASTnode *single_statement(void) {
-    int type, class = C_LOCAL;
-    struct symtable *ctype;
     struct ASTnode *stmt;
 
     switch (Token.token) {

@@ -120,6 +120,9 @@ static struct symtable *scalar_declaration(char *varname, int type,
         case C_PARAM:
             sym = addparm(varname, type, ctype, S_VARIABLE);
             break;
+        case C_LOCAL:
+            sym = addlocl(varname, type, ctype, S_VARIABLE, 1);
+            break;
         case C_MEMBER:
             sym = addmemb(varname, type, ctype, S_VARIABLE, 1);
             break;
@@ -378,21 +381,21 @@ static struct symtable *function_declaration(int type, struct symtable *ctype) {
     Looplevel = Switchlevel = 0;
 
     lbrace();
-//    tree = compound_statement(0);
+    tree = compound_statement(0);
     rbrace();
 
-//    if (type != P_VOID) {
-//        if (tree == NULL)
-//            fatal("No statements in function with non-void type");
-//
-//        finalstmt = (tree->op == A_GLUE) ? tree->right : tree;
-//        if (finalstmt == NULL || finalstmt->op != A_RETURN)
-//            fatal("No return for function with non-void type");
-//    }
-//    tree = mkastunary(A_FUNCTION, type, tree, oldfuncsym, endlabel);
-//
+    if (type != P_VOID) {
+        if (tree == NULL)
+            fatal("No statements in function with non-void type");
+
+        finalstmt = (tree->op == A_GLUE) ? tree->right : tree;
+        if (finalstmt == NULL || finalstmt->op != A_RETURN)
+            fatal("No return for function with non-void type");
+    }
+    tree = mkastunary(A_FUNCTION, type, tree, oldfuncsym, endlabel);
+
 //    genAST(tree, NOLABEL, NOLABEL, NOLABEL, 0);
-//    freeloclsyms();
+    freeloclsyms();
     return (oldfuncsym);
 }
 
@@ -414,11 +417,14 @@ static struct symtable *symbol_declaration(int type, struct symtable *ctype,
                 fatals("Duplicate global variable declaration", varname);
             break;
         case C_PARAM:
+        case C_LOCAL:
             if (findlocl(varname) != NULL)
                 fatals("Duplicate local variable declaration", varname);
+            break;
         case C_MEMBER:
             if (findmember(varname) != NULL)
                 fatals("Duplicate struct/union member declaration", varname);
+            break;
     }
 
     sym = scalar_declaration(varname, type, ctype, class);
