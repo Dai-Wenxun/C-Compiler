@@ -512,12 +512,14 @@ void cgglobsym(struct symtable *sym) {
     if (sym->stype == S_FUNCTION)
         return;
 
-    if (sym->stype == S_ARRAY)
+    if (sym->stype == S_ARRAY) {
         size = typesize(value_at(sym->type), sym->ctype);
-    else
+        type = value_at(sym->type);
+    }
+    else {
         size = sym->size;
-
-    type = sym->type;
+        type = sym->type;
+    }
 
     cgdataseg();
     fprintf(Outfile, "\t.globl\t%s\n", sym->name);

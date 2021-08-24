@@ -6,7 +6,8 @@ static struct symtable *composite_declaration(int type);
 static void enum_declaration(void);
 static void typedef_declaration(void);
 static int type_of_typedef(struct symtable **ctype);
-static struct symtable *symbol_declaration(int type, struct symtable *ctype, int class);
+static struct symtable *symbol_declaration(int type, struct symtable *ctype,
+                                        int class, struct ASTnode **tree);
 
 static int parse_type(struct symtable **ctype, int *class) {
     int type;
@@ -108,9 +109,10 @@ static int parse_literal(int type) {
 }
 
 static struct symtable *scalar_declaration(char *varname, int type,
-                                struct symtable *ctype, int class) {
-
+                                struct symtable *ctype, int class,
+                                struct ASTnode **tree) {
     struct symtable *sym = NULL;
+    struct ASTnode *varnode, *exprnode;
 
     switch (class) {
         case C_GLOBAL:
@@ -137,6 +139,16 @@ static struct symtable *scalar_declaration(char *varname, int type,
             sym->initlist =(int *)malloc(sizeof(int));
             sym->initlist[0] = parse_literal(type);
             scan(&Token);
+        } else {
+            varnode = mkastleaf(A_IDENT, type, sym, 0);
+            exprnode = binexpr(0);
+            exprnode->rvalue = 1;
+
+            exprnode = modify_type(exprnode, varnode->type, 0);
+            if (exprnode == NULL)
+                fatal("Incompatible type in assignment");
+
+            *tree = mkastnode(A_ASSIGN, varnode->type, exprnode, NULL, varnode,  NULL, 0);
         }
     }
 
@@ -234,6 +246,7 @@ static struct symtable *array_declaration(char *varname, int type,
 static struct symtable *composite_declaration(int type) {
     struct symtable *ctype  = NULL;
     struct symtable *m;
+    struct ASTnode *unused;
     char *name;
     int t, offset;
 
@@ -266,7 +279,7 @@ static struct symtable *composite_declaration(int type) {
     lbrace();
 
     while (1) {
-        t = declaration_list(C_MEMBER, T_SEMI, T_RBRACE);
+        t = declaration_list(C_MEMBER, T_SEMI, T_RBRACE, &unused);
         if (t == -1)
             fatal("Bad type in member list");
         if (Token.token == T_SEMI)
@@ -306,7 +319,7 @@ static struct symtable *composite_declaration(int type) {
             t = parse_stars(P_STRUCT);
         else
             t = parse_stars(P_UNION);
-        symbol_declaration(t, ctype, C_GLOBAL);
+        symbol_declaration(t, ctype, C_GLOBAL, &unused);
 
         if (Token.token == T_SEMI)
             break;
@@ -400,6 +413,7 @@ static int type_of_typedef(struct symtable **ctype) {
 
 static int param_declaration_list(struct symtable *oldfuncsym) {
     struct symtable *protoptr = NULL;
+    struct ASTnode *unused;
     int type;
     int paramcnt = 0;
 
@@ -407,7 +421,7 @@ static int param_declaration_list(struct symtable *oldfuncsym) {
         protoptr = oldfuncsym->member;
 
     while (Token.token != T_RPAREN) {
-        type = declaration_list(C_PARAM, T_COMMA, T_RPAREN);
+        type = declaration_list(C_PARAM, T_COMMA, T_RPAREN, &unused);
         if (type == -1)
             fatal("Bad type in param list");
 
@@ -484,16 +498,19 @@ static struct symtable *function_declaration(int type, struct symtable *ctype) {
     return (oldfuncsym);
 }
 
-
 static struct symtable *symbol_declaration(int type, struct symtable *ctype,
-                                           int class) {
+                                           int class, struct ASTnode **tree) {
     struct symtable *sym = NULL;
     char *varname = strdup(Text);
     
     ident();
 
-    if (Token.token == T_LPAREN)
+    if (Token.token == T_LPAREN) {
+        if (class != C_GLOBAL)
+            fatal("Function definition not at global level");
         return (function_declaration(type, ctype));
+    }
+
 
     switch (class) {
         case C_GLOBAL:
@@ -514,14 +531,16 @@ static struct symtable *symbol_declaration(int type, struct symtable *ctype,
     if (Token.token == T_LBRACKET)
         sym = array_declaration(varname, type, ctype, class);
     else
-        sym = scalar_declaration(varname, type, ctype, class);
+        sym = scalar_declaration(varname, type, ctype, class, tree);
 
     return (sym);
 }
 
-int declaration_list(int class, int et1, int et2) {
+int declaration_list(int class, int et1, int et2, struct ASTnode **gluetree) {
     struct symtable *ctype;
     int inittype, type;
+    struct ASTnode *tree;
+    *gluetree = NULL;
 
     if ((inittype = parse_type(&ctype, &class)) == -1)
         return (inittype);
@@ -529,7 +548,12 @@ int declaration_list(int class, int et1, int et2) {
     while (1) {
         type = parse_stars(inittype);
 
-        symbol_declaration(type, ctype, class);
+        symbol_declaration(type, ctype, class, &tree);
+
+        if (*gluetree == NULL)
+            *gluetree = tree;
+        else
+            *gluetree = mkastnode(A_GLUE, P_NONE, *gluetree, NULL, tree, NULL, 0);
 
         if (Token.token == et1 || Token.token == et2)
             return (type);
@@ -540,8 +564,9 @@ int declaration_list(int class, int et1, int et2) {
 }
 
 void global_declarations(void) {
+    struct ASTnode *unused;
     while (Token.token != T_EOF) {
-        declaration_list(C_GLOBAL, T_SEMI, T_EOF);
+        declaration_list(C_GLOBAL, T_SEMI, T_EOF, &unused);
         if (Token.token == T_SEMI)
             scan(&Token);
     }
