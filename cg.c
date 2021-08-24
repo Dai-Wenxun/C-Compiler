@@ -512,7 +512,11 @@ void cgglobsym(struct symtable *sym) {
     if (sym->stype == S_FUNCTION)
         return;
 
-    size = sym->size;
+    if (sym->stype == S_ARRAY)
+        size = typesize(value_at(sym->type), sym->ctype);
+    else
+        size = sym->size;
+
     type = sym->type;
 
     cgdataseg();

@@ -146,6 +146,91 @@ static struct symtable *scalar_declaration(char *varname, int type,
     return (sym);
 }
 
+static struct symtable *array_declaration(char *varname, int type,
+                                struct symtable *ctype, int class) {
+    struct symtable *sym;
+    int i = 0, maxelems;
+
+    switch (class) {
+        case C_GLOBAL:
+        case C_EXTERN:
+            sym = addglob(varname, pointer_to(type), ctype, S_ARRAY, class, 0, 0);
+            break;
+        default:
+            fatal("For now, declaration of non-global arrays is not implemented");
+    }
+
+    scan(&Token);
+
+    if (Token.token == T_INTLIT) {
+        if (Token.intvalue <= 0)
+            fatald("array size is illegal", Token.intvalue);
+        sym->nelems = Token.intvalue;
+        scan(&Token);
+    }
+
+    match(T_RBRACKET, "]");
+
+    if (Token.token == T_ASSIGN) {
+        if (class != C_GLOBAL)
+            fatals("Variable can not be initialised", varname);
+
+        // Skip the '='
+        scan(&Token);
+
+        lbrace();
+
+        #define INCREMENT 2
+        if (sym->nelems != 0)
+            maxelems = sym->nelems;
+        else
+            maxelems = INCREMENT;
+
+        sym->initlist = (int *)malloc(maxelems * sizeof(int));
+
+        while (Token.token != T_RBRACE) {
+            sym->initlist[i++] = parse_literal(type);
+            scan(&Token);
+
+            if (sym->nelems == 0 && i == maxelems) {
+                maxelems += INCREMENT;
+                sym->initlist = (int *)realloc(sym->initlist, maxelems * sizeof(int));
+            }
+
+            if (sym->nelems != 0 && i == maxelems) {
+                if (Token.token != T_RBRACE)
+                    fatal("Too many values in initialisation list");
+                break;
+            }
+
+            if (Token.token == T_RBRACE) {
+                if (sym->nelems == 0)
+                    sym->nelems = i;
+                break;
+            }
+
+            comma();
+        }
+
+        for (; i < sym->nelems;) {
+            sym->initlist[i++] = 0;
+        }
+
+        rbrace();
+    }
+
+    if (sym->nelems == 0) {
+        sym->nelems = 1;
+        warn("array assumed to have one element");
+    }
+
+
+    if (class == C_GLOBAL)
+        genglobsym(sym);
+
+    return (sym);
+}
+
 static struct symtable *composite_declaration(int type) {
     struct symtable *ctype  = NULL;
     struct symtable *m;
@@ -394,7 +479,7 @@ static struct symtable *function_declaration(int type, struct symtable *ctype) {
     }
     tree = mkastunary(A_FUNCTION, type, tree, oldfuncsym, endlabel);
 
-//    genAST(tree, NOLABEL, NOLABEL, NOLABEL, 0);
+    genAST(tree, NOLABEL, NOLABEL, NOLABEL, 0);
     freeloclsyms();
     return (oldfuncsym);
 }
@@ -426,8 +511,10 @@ static struct symtable *symbol_declaration(int type, struct symtable *ctype,
                 fatals("Duplicate struct/union member declaration", varname);
             break;
     }
-
-    sym = scalar_declaration(varname, type, ctype, class);
+    if (Token.token == T_LBRACKET)
+        sym = array_declaration(varname, type, ctype, class);
+    else
+        sym = scalar_declaration(varname, type, ctype, class);
 
     return (sym);
 }
