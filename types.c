@@ -13,13 +13,13 @@ int ptrtype(int type) {
 
 int pointer_to(int type) {
     if ((type & 0xf) == 0xf)
-        fatald("Unrecognised in pointer_to(): type", type);
+        fatald("unrecognised in pointer_to(): type", type);
     return (type + 1);
 }
 
 int value_at(int type) {
     if ((type & 0xf) == 0x0)
-        fatald("Unrecognised in value_at(): type", type);
+        fatald("unrecognised in value_at(): type", type);
     return (type - 1);
 }
 

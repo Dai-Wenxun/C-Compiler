@@ -10,7 +10,7 @@ struct ASTnode *mkastnode(int op, int type,
 
     node = (struct ASTnode *)malloc(sizeof(struct ASTnode));
     if (node == NULL)
-        fatal("Unable to malloc a ASTnode in mkastnode()");
+        fatal("unable to malloc a ASTnode in mkastnode()");
 
     node->op = op;
     node->type = type;
@@ -32,12 +32,4 @@ struct ASTnode *mkastleaf(int op, int type,
 struct ASTnode *mkastunary(int op, int type, struct ASTnode *left,
                 struct symtable *sym, int intvalue) {
     return (mkastnode(op, type, left, NULL, NULL, sym, intvalue));
-}
-
-static int gendumplabel(void) {
-    static int id = 1;
-    return (id++);
-}
-
-void dumpAST(struct ASTnode *n, int label, int level) {
 }

@@ -5,7 +5,7 @@
 static void appendsym(struct symtable **head, struct symtable **tail,
             struct symtable *node) {
     if (head == NULL || tail == NULL || node == NULL)
-        fatal("Either head, tail or node is NULL in appendsym()");
+        fatal("either head, tail or node is NULL in appendsym()");
 
     if (*tail) {
         (*tail)->next = node;
@@ -19,7 +19,7 @@ static struct symtable *newsym(char *name, int type, struct symtable *ctype,
                         int stype, int class, int nelems, int posn) {
     struct symtable *node = (struct symtable *)malloc(sizeof(struct symtable));
     if (node == NULL)
-        fatal("Unable to malloc a symbol table node in newsym()");
+        fatal("unable to malloc a symbol table node in newsym()");
 
     node->name = strdup(name);
     node->type = type;
@@ -52,7 +52,8 @@ struct symtable *addglob(char *name, int type, struct symtable *ctype,
 struct symtable *addlocl(char *name, int type, struct symtable *ctype,
                 int stype, int nelems) {
     struct symtable *sym = newsym(name, type, ctype, stype, C_LOCAL, nelems, 0);
-
+    if (type == P_STRUCT || type == P_UNION)
+        sym->size = ctype->size;
 
     appendsym(&Loclhead, &Locltail, sym);
     return (sym);

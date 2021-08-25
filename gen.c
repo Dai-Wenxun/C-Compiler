@@ -76,7 +76,7 @@ static int gen_funccall(struct ASTnode *n) {
 static int genSWITCH(struct ASTnode *n) {
     int *caseval, *caselabel;
     int Ljumptop, Lend;
-    int i, reg, defaultlabel = 0;
+    int i, reg, defaultlabel;
     struct ASTnode *c;
 
     caseval = (int *)malloc((n->intvalue + 1) * sizeof(int));
@@ -149,7 +149,7 @@ int genAST(struct ASTnode *n, int iflabel, int looptoplabel,
                 case A_DEREF:
                     return (cgstorderef(leftreg, rightreg, n->right->type));
                 default:
-                    fatald("Can't A_ASSIGN in genAST(), op", n->op);
+                    fatald("can't assign in genAST(), op", n->op);
             }
             break;
         case A_OR:
@@ -236,7 +236,7 @@ int genAST(struct ASTnode *n, int iflabel, int looptoplabel,
             cgjump(looptoplabel);
             return (NOREG);
         default:
-            fatald("Unknown AST operator", n->op);
+            fatald("unknown AST operator", n->op);
     }
 }
 

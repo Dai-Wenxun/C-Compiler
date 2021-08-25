@@ -10,7 +10,7 @@ static int chrpos(char *s, int c) {
 }
 
 static int next(void) {
-    int c, l;
+    int c;
 
     if (Putback) {
         c = Putback;
@@ -19,25 +19,6 @@ static int next(void) {
     }
 
     c = fgetc(Infile);
-
-//    while (c == '#') {
-//        scan(&Token);
-//        if (Token.token != T_INTLIT)
-//            fatals("Expecting pre-processor line number, got:", Text);
-//        l = Token.intvalue;
-//
-//        scan(&Token);
-//        if (Token.token != T_STRLIT)
-//            fatals("Expecting pre-processor file name, got:", Text);
-//        if (Text[0] != '<') {
-//            if (strcmp(Text, Infilename))
-//                Infilename = strdup(Text);
-//            Line = l;
-//        }
-//
-//        while ((c = fgetc(Infile)) != '\n')
-//            c = fgetc(Infile);
-//    }
 
     if (c == '\n')
         Line++;
@@ -118,7 +99,7 @@ static void scanstr(void) {
         }
         Text[i] = (char)c;
     }
-    fatal("String literal too long");
+    fatal("string literal too long");
 }
 
 static void scanident(int c) {
@@ -206,6 +187,20 @@ static int keyword(char *s) {
     }
     return (0);
 }
+
+char *Tstring[] = {
+        "EOF", "=", "||", "&&", "|", "^", "&",
+        "==", "!=", "<", ">", "<=", ">=", "<<", ">>",
+        "+", "-", "*", "/", "++", "--", "~", "!",
+        "void", "char", "int", "long",
+        "struct", "union", "enum",
+        "if", "else", "while", "for", "return",
+        "typedef", "extern", "break", "continue",
+        "switch", "case", "default",
+        "intlit", "strlit", "identifier",
+        "{", "}", "(", ")", "[", "]",
+        ";", ",", ".", "->", ":"
+};
 
 int scan(struct token *t) {
     int c, tokentype;
@@ -332,7 +327,7 @@ int scan(struct token *t) {
             t->intvalue = scanch();
             t->token = T_INTLIT;
             if (next() != '\'')
-                fatal("Expected '\'' at end of char literal");
+                fatal("expected '\'' at end of char literal");
             break;
         case '\"':
             scanstr();
@@ -351,12 +346,14 @@ int scan(struct token *t) {
                     t->token = tokentype;
                     break;
                 }
-                // Not a keyword, so must be an identifier.
+
                 t->token = T_IDENT;
                 break;
             }
 
-            fatalc("Unrecognised character", c);
+            fatalc("unrecognised character", c);
     }
+
+    t->tokptr = Tstring[t->token];
     return (1);
 }

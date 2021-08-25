@@ -26,7 +26,7 @@ static struct ASTnode *funccall(void) {
     struct symtable *funcptr;
 
     if ((funcptr = findsymbol(Text)) == NULL || funcptr->stype != S_FUNCTION)
-        fatals("Undeclared function", Text);
+        fatals("undeclared function", Text);
     lparen();
 
     tree = expression_list(T_RPAREN);
@@ -42,7 +42,7 @@ static struct ASTnode *array_access(void) {
     struct symtable *aryptr;
 
     if ((aryptr = findsymbol(Text)) == NULL || aryptr->stype != S_ARRAY)
-        fatals("Undeclared array", Text);
+        fatals("undeclared array", Text);
 
     left = mkastleaf(A_ADDR, aryptr->type, aryptr, 0);
 
@@ -53,7 +53,7 @@ static struct ASTnode *array_access(void) {
     match(T_RBRACKET, "]");
 
     if (!inttype(right->type))
-        fatal("Array index is not of integer type");
+        fatal("array index is not of integer type");
 
     right = modify_type(right, left->type, A_ADD);
 
@@ -70,13 +70,13 @@ static struct ASTnode *member_access(int withpointer) {
     struct symtable *m;
 
     if ((compvar = findsymbol(Text)) == NULL)
-        fatals("Undeclared variable", Text);
+        fatals("undeclared variable", Text);
     if (withpointer && compvar->type != pointer_to(P_STRUCT)
         && compvar->type != pointer_to(P_UNION))
-        fatals("Undeclared variable", Text);
+        fatals("undeclared variable", Text);
     if (!withpointer && compvar->type != P_STRUCT
         && compvar->type != P_UNION)
-        fatals("Undeclared variable", Text);
+        fatals("undeclared variable", Text);
 
     if (withpointer)
         left = mkastleaf(A_IDENT, compvar->type, compvar, 0);
@@ -95,7 +95,7 @@ static struct ASTnode *member_access(int withpointer) {
             break;
 
     if (m == NULL)
-        fatals("No member found in struct/union: ", Text);
+        fatals("no member found in struct/union: ", Text);
 
     right = mkastleaf(A_INTLIT, P_INT, NULL, m->posn);
 
@@ -128,7 +128,7 @@ static struct ASTnode *postfix(void) {
         return (member_access(1));
 
     if ((varptr = findsymbol(Text)) == NULL || varptr->stype != S_VARIABLE)
-        fatals("Undeclared variable", Text);
+        fatals("undeclared variable", Text);
 
     switch (Token.token) {
         case T_INC:
@@ -154,7 +154,7 @@ static struct ASTnode *primary(void) {
 
     switch (Token.token) {
         case T_INTLIT:
-            if (Token.intvalue >= 0 && Token.intvalue <= 255)
+            if (Token.intvalue >= -128 && Token.intvalue <= 255)
                 n = mkastleaf(A_INTLIT, P_CHAR, NULL, Token.intvalue);
             else
                 n = mkastleaf(A_INTLIT, P_INT, NULL, Token.intvalue);
@@ -175,7 +175,7 @@ static struct ASTnode *primary(void) {
             return (n);
 
         default:
-            fatald("Expecting a primary expression, got token", Token.token);
+            fatals("expecting a primary expression, got token", Token.tokptr);
     }
     scan(&Token);
     return (n);
@@ -184,7 +184,7 @@ static struct ASTnode *primary(void) {
 static int binastop(int tokentype) {
     if (tokentype > T_EOF && tokentype <= T_SLASH)
         return (tokentype);
-    fatald("Syntax error, token", tokentype);
+    fatald("syntax error, token", tokentype);
     return (0);
 }
 
@@ -207,11 +207,11 @@ static int OpPrec[] = {
 static int op_precedence(int tokentype) {
     int prec;
     if (tokentype > T_SLASH)
-        fatald("Token with no precedence in op_precedence", tokentype);
+        fatald("token with no precedence in op_precedence", tokentype);
     prec = OpPrec[tokentype];
 
     if (prec == 0)
-        fatald("Syntax error, token", tokentype);
+        fatald("syntax error, token", tokentype);
 
     return (prec);
 }
@@ -318,7 +318,7 @@ struct ASTnode *binexpr(int ptp) {
             right->rvalue = 1;
             right = modify_type(right, left->type, 0);
             if (right == NULL)
-                fatal("Incompatible type in assignment");
+                fatal("incompatible type in assignment");
 
             ltemp = left;
             left = right;
@@ -331,7 +331,7 @@ struct ASTnode *binexpr(int ptp) {
             ltemp = modify_type(left, right->type, ASTop);
             rtemp = modify_type(right, left->type, ASTop);
             if (ltemp == NULL && rtemp == NULL)
-                fatal("Incompatible types in binary expression");
+                fatal("incompatible types in binary expression");
             if (ltemp != NULL)
                 left = ltemp;
             if (rtemp != NULL)

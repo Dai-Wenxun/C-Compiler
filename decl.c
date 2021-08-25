@@ -64,7 +64,7 @@ static int parse_type(struct symtable **ctype, int *class) {
             type = type_of_typedef(ctype);
             break;
         default:
-            fatald("Illegal type, token", Token.token);
+            fatals("illegal type, token", Token.tokptr);
     }
 
     return (type);
@@ -100,7 +100,7 @@ static int parse_literal(int type) {
             case P_LONG:
                 break;
             default:
-                fatal("Type mismatch: integer literal vs. variable");
+                fatal("type mismatch: integer literal vs. variable");
         }
     } else
         fatal("initializer element is not constant");
@@ -132,7 +132,7 @@ static struct symtable *scalar_declaration(char *varname, int type,
 
     if (Token.token == T_ASSIGN) {
         if (class != C_GLOBAL && class != C_LOCAL)
-            fatals("Variable can not be initialised", varname);
+            fatals("variable can not be initialised", varname);
         scan(&Token);
 
         if (class == C_GLOBAL) {
@@ -146,7 +146,7 @@ static struct symtable *scalar_declaration(char *varname, int type,
 
             exprnode = modify_type(exprnode, varnode->type, 0);
             if (exprnode == NULL)
-                fatal("Incompatible type in assignment");
+                fatal("incompatible type in assignment");
 
             *tree = mkastnode(A_ASSIGN, varnode->type, exprnode, NULL, varnode,  NULL, 0);
         }
@@ -169,7 +169,7 @@ static struct symtable *array_declaration(char *varname, int type,
             sym = addglob(varname, pointer_to(type), ctype, S_ARRAY, class, 0, 0);
             break;
         default:
-            fatal("For now, declaration of non-global arrays is not implemented");
+            fatal("declaration of non-global arrays is not implemented");
     }
 
     scan(&Token);
@@ -185,7 +185,7 @@ static struct symtable *array_declaration(char *varname, int type,
 
     if (Token.token == T_ASSIGN) {
         if (class != C_GLOBAL)
-            fatals("Variable can not be initialised", varname);
+            fatals("variable can not be initialised", varname);
 
         // Skip the '='
         scan(&Token);
@@ -211,7 +211,7 @@ static struct symtable *array_declaration(char *varname, int type,
 
             if (sym->nelems != 0 && i == maxelems) {
                 if (Token.token != T_RBRACE)
-                    fatal("Too many values in initialisation list");
+                    fatal("too many values in initialisation list");
                 break;
             }
 
@@ -281,7 +281,7 @@ static struct symtable *composite_declaration(int type) {
     while (1) {
         t = declaration_list(C_MEMBER, T_SEMI, T_RBRACE, &unused);
         if (t == -1)
-            fatal("Bad type in member list");
+            fatal("bad type in member list");
         if (Token.token == T_SEMI)
             semi();
         if (Token.token == T_RBRACE)
@@ -291,7 +291,7 @@ static struct symtable *composite_declaration(int type) {
     rbrace();
 
     if (Membhead == NULL)
-        fatals("No members in struct", ctype->name);
+        fatals("no members in struct", ctype->name);
 
     ctype->member = Membhead;
 
@@ -364,7 +364,7 @@ static void enum_declaration(void) {
         if (Token.token == T_ASSIGN) {
             scan(&Token);
             if (Token.token != T_INTLIT)
-                fatal("Expected int literal after '='");
+                fatal("expected int literal after '='");
             intval = Token.intvalue;
             scan(&Token);
         }
@@ -423,11 +423,11 @@ static int param_declaration_list(struct symtable *oldfuncsym) {
     while (Token.token != T_RPAREN) {
         type = declaration_list(C_PARAM, T_COMMA, T_RPAREN, &unused);
         if (type == -1)
-            fatal("Bad type in param list");
+            fatal("bad type in param list");
 
         if (protoptr != NULL) {
             if (protoptr->type != type)
-                fatals("Type doesn't match prototype for parameter",  Text);
+                fatals("type doesn't match prototype for parameter", Text);
             if (strcmp(protoptr->name, Text))
                 protoptr->name = strdup(Text);
             protoptr = protoptr->next;
@@ -442,7 +442,7 @@ static int param_declaration_list(struct symtable *oldfuncsym) {
         }
 
     if ((oldfuncsym != NULL) && (paramcnt != oldfuncsym->nelems))
-        fatals("Parameter count mismatch for function", oldfuncsym->name);
+        fatals("parameter count mismatch for function", oldfuncsym->name);
 
     return (paramcnt);
 }
@@ -485,11 +485,11 @@ static struct symtable *function_declaration(int type, struct symtable *ctype) {
 
     if (type != P_VOID) {
         if (tree == NULL)
-            fatal("No statements in function with non-void type");
+            fatal("no statements in function with non-void type");
 
         finalstmt = (tree->op == A_GLUE) ? tree->right : tree;
         if (finalstmt == NULL || finalstmt->op != A_RETURN)
-            fatal("No return for function with non-void type");
+            fatal("no return for function with non-void type");
     }
     tree = mkastunary(A_FUNCTION, type, tree, oldfuncsym, endlabel);
 
@@ -507,25 +507,24 @@ static struct symtable *symbol_declaration(int type, struct symtable *ctype,
 
     if (Token.token == T_LPAREN) {
         if (class != C_GLOBAL)
-            fatal("Function definition not at global level");
+            fatal("function definition not at global level");
         return (function_declaration(type, ctype));
     }
-
 
     switch (class) {
         case C_GLOBAL:
         case C_EXTERN:
             if (findglob(varname) != NULL)
-                fatals("Duplicate global variable declaration", varname);
+                fatals("duplicate global variable declaration", varname);
             break;
         case C_PARAM:
         case C_LOCAL:
             if (findlocl(varname) != NULL)
-                fatals("Duplicate local variable declaration", varname);
+                fatals("duplicate local variable declaration", varname);
             break;
         case C_MEMBER:
             if (findmember(varname) != NULL)
-                fatals("Duplicate struct/union member declaration", varname);
+                fatals("duplicate struct/union member declaration", varname);
             break;
     }
     if (Token.token == T_LBRACKET)

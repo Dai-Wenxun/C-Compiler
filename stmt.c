@@ -77,7 +77,7 @@ static struct ASTnode *return_statement(void) {
     struct ASTnode *tree;
 
     if (Functionid->type == P_VOID)
-        fatal("Can't return from a void function");
+        fatal("can't return from a void function");
 
     match(T_RETURN, "return");
     lparen();
@@ -86,7 +86,7 @@ static struct ASTnode *return_statement(void) {
 
     tree = modify_type(tree, Functionid->type, 0);
     if (tree == NULL)
-        fatal("Incompatible type in return statement");
+        fatal("incompatible type in return statement");
 
     tree = mkastunary(A_RETURN, P_NONE, tree, NULL, 0);
 
@@ -125,7 +125,7 @@ static struct ASTnode *switch_statement(void) {
     lbrace();
 
     if (!inttype(left->type))
-        fatal("Switch expression is not of integer type");
+        fatal("switch expression is not of integer type");
 
     root = mkastunary(A_SWITCH, P_NONE, left, NULL, 0);
 
@@ -152,12 +152,12 @@ static struct ASTnode *switch_statement(void) {
                     scan(&Token);
                     left = binexpr(0);
                     if (left->op != A_INTLIT)
-                        fatal("Expecting integer literal for case value");
+                        fatal("expecting integer literal for case value");
                     casevalue = left->intvalue;
 
                     for (c = casetree; c != NULL; c = c->right)
                         if (casevalue == c->intvalue)
-                            fatal("Duplicate case value");
+                            fatal("duplicate case value");
                 }
 
                 match(T_COLON, ":");
@@ -172,7 +172,7 @@ static struct ASTnode *switch_statement(void) {
                 break;
 
             default:
-                fatald("Unexpected token in switch", Token.token);
+                fatals("unexpected token in switch", Token.tokptr);
         }
     }
     Switchlevel--;

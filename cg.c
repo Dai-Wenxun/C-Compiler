@@ -48,13 +48,13 @@ static int alloc_register(void) {
             return (i);
         }
     }
-    fatal("Out of registers");
+    fatal("out of registers");
     return (NOREG);
 }
 
 static void free_register(int r) {
     if (freereg[r] != 0) {
-        fatald("Error trying to free register", r);
+        fatald("can't free register", r);
     }
     freereg[r] = 1;
 }
@@ -62,7 +62,7 @@ static void free_register(int r) {
 void cgpreamble(void) {
     freeall_registers();
 //    cgtextseg();
-
+//
 //    fprintf(Outfile,
 //           "switch:\n"
 //           "    pushq   %%rsi\n"
@@ -150,7 +150,7 @@ int cgstorlocal(int r, struct symtable *sym) {
                         dreglist[r], sym->posn);
                 break;
             default:
-                fatald("Bad type in cgstorlocal()", sym->type);
+                fatald("bad type in cgstorlocal()", sym->type);
         }
     }
     return (r);
@@ -171,7 +171,7 @@ int cgstorglob(int r, struct symtable *sym) {
                         dreglist[r], sym->name);
                 break;
             default:
-                fatald("Bad type in cgstorglob()", sym->type);
+                fatald("bad type in cgstorglob()", sym->type);
         }
     }
     return (r);
@@ -192,7 +192,7 @@ int cgstorderef(int r1, int r2, int type) {
             fprintf(Outfile, "\tmovq\t%s, (%s)\n", reglist[r1], reglist[r2]);
             break;
         default:
-            fatald("Bad type in cgstorderef()", type);
+            fatald("bad type in cgstorderef()", type);
     }
     return (r1);
 }
@@ -220,7 +220,7 @@ static char *invcmplist[] =
 
 int cgcompare_and_jump(int ASTop, int r1, int r2, int label) {
     if (ASTop < A_EQ || ASTop > A_GE)
-        fatal("Bad ASTop in cgcompare_and_jump()");
+        fatal("bad ASTop in cgcompare_and_jump()");
 
     fprintf(Outfile, "\tcmpq\t%s, %s\n", reglist[r2], reglist[r1]);
     fprintf(Outfile, "\t%s\tL%d\n", invcmplist[ASTop - A_EQ], label);
@@ -233,7 +233,7 @@ static char *cmplist[] =
 
 int cgcompare_and_set(int ASTop, int r1, int r2) {
     if (ASTop < A_EQ || ASTop > A_GE)
-        fatal("Bad ASTop in cgcompare_and_set()");
+        fatal("bad ASTop in cgcompare_and_set()");
 
     fprintf(Outfile, "\tcmpq\t%s, %s\n", reglist[r2], reglist[r1]);
     fprintf(Outfile, "\t%s\t%s\n", cmplist[ASTop - A_EQ], breglist[r2]);
@@ -342,7 +342,7 @@ int cgloadglob(struct symtable* sym, int op) {
                     fprintf(Outfile, "\tdecl\t%s(%%rip)\n", sym->name);
                 break;
             default:
-                fatald("Bad type in cgloadglob()", sym->type);
+                fatald("bad type in cgloadglob()", sym->type);
         }
     }
     return (r);
@@ -393,7 +393,7 @@ int cgloadlocal(struct symtable* sym, int op) {
                     fprintf(Outfile, "\tdecl\t%d(%%rbp)\n", sym->posn);
                 break;
             default:
-                fatald("Bad type in cgloadlocal()", sym->type);
+                fatald("bad type in cgloadlocal()", sym->type);
         }
     }
     return (r);
@@ -439,7 +439,7 @@ void cgreturn(int r, struct symtable *sym) {
             fprintf(Outfile, "\tmovq\t%s, %%rax\n", reglist[r]);
             break;
         default:
-            fatald("Bad function type in cgreturn()", sym->type);
+            fatald("bad function type in cgreturn()", sym->type);
     }
     cgjump(sym->endlabel);
 }
@@ -488,7 +488,7 @@ int cgderef(int r, int type) {
             fprintf(Outfile, "\tmovq\t(%s), %s\n", reglist[r], reglist[r]);
             break;
         default:
-            fatald("Bad type in cgderef()", type);
+            fatald("bad type in cgderef()", type);
     }
     return (r);
 }
@@ -572,7 +572,7 @@ int cgprimsize(int type) {
         case P_LONG:
             return (8);
         default:
-            fatald("Bad type in cgprimsize()", type);
+            fatald("bad type in cgprimsize()", type);
     }
 
     return (0);
@@ -588,7 +588,7 @@ int cglign(int type, int offset, int direction) {
         case P_LONG:
             break;
         default:
-            fatald("Bad type in calc_aligned_offset()", type);
+            fatald("bad type in calc_aligned_offset()", type);
     }
 
     alignment = 4;

@@ -23,8 +23,3 @@ extern_ struct symtable *Structhead, *Structtail;
 extern_ struct symtable *Unionhead, *Uniontail;
 extern_ struct symtable *Enumhead, *Enumtail;
 extern_ struct symtable *Typehead, *Typetail;
-
-extern_ int O_keepasm;
-extern_ int O_assemble;
-extern_ int O_dolink;
-extern_ int O_verbose;

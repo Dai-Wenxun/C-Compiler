@@ -3,11 +3,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#define AOUT "a.out"
-#define ASCMD "as -o"
-#define LDCMD "cc -o"
-#define CPPCMD "cpp -nostdinc -isystem"
-#define INCDIR "/tmp/include"
 
 enum {
     TEXTLEN = 512,
@@ -89,6 +84,7 @@ enum {
 struct token {
     int token;
     int intvalue;
+    char *tokptr;
 };
 
 struct symtable {
