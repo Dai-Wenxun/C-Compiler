@@ -113,7 +113,6 @@ static struct symtable *scalar_declaration(char *varname, int type,
                                 struct ASTnode **tree) {
     struct symtable *sym = NULL;
     struct ASTnode *varnode, *exprnode;
-    *tree = NULL;
 
     switch (class) {
         case C_GLOBAL:
@@ -537,9 +536,9 @@ static struct symtable *symbol_declaration(int type, struct symtable *ctype,
 }
 
 int declaration_list(int class, int et1, int et2, struct ASTnode **gluetree) {
-    struct symtable *ctype;
+    struct symtable *ctype, *sym;
     int inittype, type;
-    struct ASTnode *tree;
+    struct ASTnode *tree = NULL;
     *gluetree = NULL;
 
     if ((inittype = parse_type(&ctype, &class)) == -1)
@@ -548,7 +547,10 @@ int declaration_list(int class, int et1, int et2, struct ASTnode **gluetree) {
     while (1) {
         type = parse_stars(inittype);
 
-        symbol_declaration(type, ctype, class, &tree);
+        sym = symbol_declaration(type, ctype, class, &tree);
+
+        if (sym->stype == S_FUNCTION)
+            return (type);
 
         if (*gluetree == NULL)
             *gluetree = tree;
