@@ -198,7 +198,7 @@ int cgstorderef(int r1, int r2, int type) {
 }
 
 int cgor(int r1, int r2) {
-    fprintf(Outfile, "\torq\t%s, %s\n", reglist[r1], reglist[r2]);
+    fprintf(Outfile, "\torq\t\t%s, %s\n", reglist[r1], reglist[r2]);
     free_register(r1);
     return (r2);
 }
