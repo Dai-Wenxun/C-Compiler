@@ -113,6 +113,7 @@ static struct symtable *scalar_declaration(char *varname, int type,
                                 struct ASTnode **tree) {
     struct symtable *sym = NULL;
     struct ASTnode *varnode, *exprnode;
+    *tree = NULL;
 
     switch (class) {
         case C_GLOBAL:
