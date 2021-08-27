@@ -5,6 +5,12 @@
 #include "decl.h"
 #include <unistd.h>
 
+static void init() {
+    Line = 1;
+    Putback = '\n';
+    addglob("printf", P_INT, NULL, S_FUNCTION, C_GLOBAL, 0, 0);
+}
+
 char *alter_suffix(char *str, char suffix) {
     char *posn;
     char *newstr;
@@ -44,9 +50,8 @@ static char *do_compile(char *filename) {
         exit(1);
     }
 
-    Line = 1;
-    Putback = '\n';
     clear_symtable();
+    init();
     scan(&Token);
     genpreamble();
     global_declarations();

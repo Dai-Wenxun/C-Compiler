@@ -2,7 +2,7 @@
 #include "data.h"
 #include "decl.h"
 
-static struct ASTnode *single_statement(void);
+struct ASTnode *single_statement(void);
 
 static struct ASTnode *if_statement(void) {
     struct ASTnode *condAST, *trueAST, *falseAST = NULL;
@@ -152,7 +152,7 @@ static struct ASTnode *switch_statement(void) {
                     scan(&Token);
                     left = binexpr(0);
                     if (left->op != A_INTLIT)
-                        fatal("expecting integer literal for case value");
+                        fatal("integer literal expected for case value");
                     casevalue = left->intvalue;
 
                     for (c = casetree; c != NULL; c = c->right)
@@ -185,7 +185,7 @@ static struct ASTnode *switch_statement(void) {
     return (root);
 }
 
-static struct ASTnode *single_statement(void) {
+struct ASTnode *single_statement(void) {
     struct ASTnode *stmt;
 
     switch (Token.token) {

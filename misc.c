@@ -50,21 +50,21 @@ void fatal(char *s) {
 }
 
 void fatals(char *s1, char *s2) {
-    fprintf(stderr, "[Error]: %s: %s on line %d of %s\n", s1, s2, Line, Infilename);
+    fprintf(stderr, "[Error]: %s: '%s' on line %d of %s\n", s1, s2, Line, Infilename);
     fclose(Outfile);
     unlink(Outfilename);
     exit(1);
 }
 
 void fatald(char *s, int d) {
-    fprintf(stderr, "[Error]: %s: %d on line %d of %s\n", s, d, Line, Infilename);
+    fprintf(stderr, "[Error]: %s: '%d' on line %d of %s\n", s, d, Line, Infilename);
     fclose(Outfile);
     unlink(Outfilename);
     exit(1);
 }
 
 void fatalc(char *s, int c) {
-    fprintf(stderr, "[Error]: %s: %c on line %d of %s\n", s, c, Line, Infilename);
+    fprintf(stderr, "[Error]: %s: '%c' on line %d of %s\n", s, c, Line, Infilename);
     fclose(Outfile);
     unlink(Outfilename);
     exit(1);

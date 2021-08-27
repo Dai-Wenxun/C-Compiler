@@ -76,6 +76,7 @@ struct ASTnode *binexpr(int ptp);
 
 // stmt.c
 struct ASTnode *compound_statement(int inswitch);
+struct ASTnode *single_statement(void);
 
 // misc.c
 void match(int t, char *what);

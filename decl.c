@@ -364,7 +364,7 @@ static void enum_declaration(void) {
         if (Token.token == T_ASSIGN) {
             scan(&Token);
             if (Token.token != T_INTLIT)
-                fatal("expected int literal after '='");
+                fatal("integer literal expected after '='");
             intval = Token.intvalue;
             scan(&Token);
         }
@@ -507,7 +507,7 @@ static struct symtable *symbol_declaration(int type, struct symtable *ctype,
 
     if (Token.token == T_LPAREN) {
         if (class != C_GLOBAL)
-            fatal("function definition not at global level");
+            fatal("function declaration or definition not at global level");
         return (function_declaration(type, ctype));
     }
 
