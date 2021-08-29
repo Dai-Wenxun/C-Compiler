@@ -229,6 +229,8 @@ int genAST(struct ASTnode *n, int iflabel, int looptoplabel,
                     rightreg = cgloadint(n->size, P_INT);
                     return (cgmul(leftreg, rightreg));
             }
+        case A_CAST:
+            return (leftreg);
         case A_BREAK:
             cgjump(loopendlabel);
             return (NOREG);

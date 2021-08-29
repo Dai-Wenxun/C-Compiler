@@ -9,7 +9,7 @@ static int type_of_typedef(struct symtable **ctype);
 static struct symtable *symbol_declaration(int type, struct symtable *ctype,
                                         int class, struct ASTnode **tree);
 
-static int parse_type(struct symtable **ctype, int *class) {
+int parse_type(struct symtable **ctype, int *class) {
     int type;
 
     if (Token.token == T_EXTERN) {
@@ -70,7 +70,7 @@ static int parse_type(struct symtable **ctype, int *class) {
     return (type);
 }
 
-static int parse_stars(int type) {
+int parse_stars(int type) {
     while (1) {
         if (Token.token != T_STAR)
             break;
@@ -80,11 +80,24 @@ static int parse_stars(int type) {
     return (type);
 }
 
-static int parse_literal(int type) {
+int parse_cast(void) {
+    int type, class;
+    struct symtable *ctype;
+
+    type = parse_stars(parse_type(&ctype, &class));
+
+    if (type == P_STRUCT || type == P_UNION || type == P_VOID)
+        fatal("cannot cast to a struct, union or void type");
+    return (type);
+}
+
+int parse_literal(int type) {
     struct symtable *etype;
 
-    if ((type == pointer_to(P_CHAR)) && (Token.token == T_STRLIT))
-        return (genglobstr(Text));
+    if (Token.token == T_STRLIT) {
+        if ((type == pointer_to(P_CHAR) || type == P_NONE))
+            return (genglobstr(Text));
+    }
 
     if ((Token.token == T_IDENT) && ((etype = findenumval(Text)) != NULL)) {
         Token.token = T_INTLIT;
@@ -96,6 +109,7 @@ static int parse_literal(int type) {
             case P_CHAR:
                 if (Token.intvalue < -128 || Token.intvalue > 255)
                     warn("overflow in implicit constant conversion");
+            case P_NONE:
             case P_INT:
             case P_LONG:
                 break;
@@ -113,6 +127,7 @@ static struct symtable *scalar_declaration(char *varname, int type,
                                 struct ASTnode **tree) {
     struct symtable *sym = NULL;
     struct ASTnode *varnode, *exprnode;
+    int casttype;
 
     switch (class) {
         case C_GLOBAL:
@@ -136,6 +151,16 @@ static struct symtable *scalar_declaration(char *varname, int type,
         scan(&Token);
 
         if (class == C_GLOBAL) {
+            if (Token.token == T_LPAREN) {
+                scan(&Token);
+                casttype = parse_cast();
+                rparen();
+
+                if (casttype == type || (casttype== pointer_to(P_VOID) && ptrtype(type)))
+                    type = P_NONE;
+                else
+                    fatal("type mismatch");
+            }
             sym->initlist =(int *)malloc(sizeof(int));
             sym->initlist[0] = parse_literal(type);
             scan(&Token);
@@ -162,6 +187,7 @@ static struct symtable *array_declaration(char *varname, int type,
                                 struct symtable *ctype, int class) {
     struct symtable *sym;
     int i = 0, maxelems;
+    int casttype;
 
     switch (class) {
         case C_GLOBAL:
@@ -201,6 +227,15 @@ static struct symtable *array_declaration(char *varname, int type,
         sym->initlist = (int *)malloc(maxelems * sizeof(int));
 
         while (Token.token != T_RBRACE) {
+            if (Token.token == T_LPAREN) {
+                lparen();
+                casttype = parse_cast();
+                rparen();
+                if (casttype == type ||casttype == pointer_to(P_VOID) && ptrtype(type))
+                    type = P_NONE;
+                else
+                    fatal("type mismatch");
+            }
             sym->initlist[i++] = parse_literal(type);
             scan(&Token);
 

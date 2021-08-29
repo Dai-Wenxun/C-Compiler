@@ -75,7 +75,7 @@ struct symtable *addmemb(char *name, int type, struct symtable *ctype,
 }
 
 struct symtable *addstruct(char *name) {
-    struct symtable *sym = newsym(Text, P_STRUCT, NULL, 0, C_STRUCT, 0, 0);
+    struct symtable *sym = newsym(name, P_STRUCT, NULL, 0, C_STRUCT, 0, 0);
     appendsym(&Structhead, &Structtail, sym);
     return (sym);
 }

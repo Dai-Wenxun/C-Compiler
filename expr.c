@@ -151,6 +151,7 @@ static struct ASTnode *postfix(void) {
 static struct ASTnode *primary(void) {
     struct ASTnode *n;
     int label;
+    int type = 0;
 
     switch (Token.token) {
         case T_INTLIT:
@@ -170,12 +171,34 @@ static struct ASTnode *primary(void) {
 
         case T_LPAREN:
             scan(&Token);
-            n = binexpr(0);
-            rparen();
+
+            switch (Token.token) {
+                case T_IDENT:
+                    if (findtypedef(Text) == NULL) {
+                        n = binexpr(0); break;
+                    }
+                case T_VOID:
+                case T_CHAR:
+                case T_INT:
+                case T_LONG:
+                case T_STRUCT:
+                case T_UNION:
+                case T_ENUM:
+                    type = parse_cast();
+                    rparen();
+                default:
+                    n = binexpr(0);
+            }
+
+            if (type == 0)
+                rparen();
+            else
+                n = mkastunary(A_CAST, type, n, NULL, 0);
+
             return (n);
 
         default:
-            fatals("expecting a primary expression, got token", Token.tokptr);
+            fatals("primary expression expected, got token", Token.tokptr);
     }
     scan(&Token);
     return (n);
@@ -338,7 +361,7 @@ struct ASTnode *binexpr(int ptp) {
                 right = rtemp;
         }
 
-        left = mkastnode(binastop(tokentype), left->type, left, NULL, right, NULL, 0);
+        left = mkastnode(ASTop, left->type, left, NULL, right, NULL, 0);
 
         tokentype = Token.token;
         if (tokentype == T_SEMI || tokentype == T_RPAREN

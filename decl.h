@@ -76,7 +76,6 @@ struct ASTnode *binexpr(int ptp);
 
 // stmt.c
 struct ASTnode *compound_statement(int inswitch);
-struct ASTnode *single_statement(void);
 
 // misc.c
 void match(int t, char *what);
@@ -122,6 +121,10 @@ void freeloclsyms(void);
 // decl.c
 int declaration_list(int class, int et1, int et2, struct ASTnode **gluetree);
 void global_declarations(void);
+int parse_type(struct symtable **ctype, int *class);
+int parse_stars(int type);
+int parse_cast(void);
+int parse_literal(int type);
 
 // types.c
 int inttype(int type);

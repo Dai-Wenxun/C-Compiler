@@ -2,7 +2,7 @@
 #include "data.h"
 #include "decl.h"
 
-struct ASTnode *single_statement(void);
+static struct ASTnode *single_statement(void);
 
 static struct ASTnode *if_statement(void) {
     struct ASTnode *condAST, *trueAST, *falseAST = NULL;
@@ -76,10 +76,17 @@ static struct ASTnode *for_statement(void) {
 static struct ASTnode *return_statement(void) {
     struct ASTnode *tree;
 
-    if (Functionid->type == P_VOID)
-        fatal("can't return from a void function");
-
     match(T_RETURN, "return");
+
+    if (Functionid->type == P_VOID) {
+        if (Token.token == T_SEMI) {
+            semi();
+            return (mkastunary(A_RETURN, P_NONE, NULL, NULL, 0));
+        }
+        else
+            fatals("return with a value in a void function", Functionid->name);
+    }
+
     lparen();
 
     tree = binexpr(0);
@@ -97,7 +104,7 @@ static struct ASTnode *return_statement(void) {
 
 static struct ASTnode *break_statement(void) {
     if (Looplevel == 0 && Switchlevel == 0)
-        fatal("no loop to break out from");
+        fatal("no loop or switch to break");
     scan(&Token);
     semi();
     return (mkastleaf(A_BREAK, P_NONE, NULL, 0));
@@ -105,7 +112,7 @@ static struct ASTnode *break_statement(void) {
 
 static struct ASTnode *continue_statement(void) {
     if (Looplevel == 0)
-        fatal("no loop to continue to");
+        fatal("no loop to continue");
     scan(&Token);
     semi();
     return (mkastleaf(A_CONTINUE, P_NONE, NULL, 0));
@@ -185,7 +192,7 @@ static struct ASTnode *switch_statement(void) {
     return (root);
 }
 
-struct ASTnode *single_statement(void) {
+static struct ASTnode *single_statement(void) {
     struct ASTnode *stmt;
 
     switch (Token.token) {

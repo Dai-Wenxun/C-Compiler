@@ -72,7 +72,7 @@ enum {
     A_INTLIT, A_STRLIT, A_IDENT,                //35
     //
     A_RETURN, A_ADDR, A_DEREF,              //38
-    A_WIDEN, A_SCALE, A_BREAK, A_CONTINUE,      //42
+    A_WIDEN, A_SCALE, A_CAST, A_BREAK, A_CONTINUE,      //42
     A_CASE, A_DEFAULT                   //44
 };
 

@@ -35,17 +35,17 @@ struct ASTnode *modify_type(struct ASTnode *tree, int rtype, int op) {
 
     ltype = tree->type;
 
-    if (ltype == P_STRUCT || ltype == P_UNION)
-        fatal("Don't know how to do this yet");
-    if (rtype == P_STRUCT || rtype == P_UNION)
-        fatal("Don't know how to do this yet");
+    if (ltype == P_STRUCT || rtype == P_STRUCT
+        || ltype == P_UNION || rtype == P_UNION)
+        fatal("struct and union type modification unsupported");
+
 
     if (inttype(ltype) && inttype(rtype)) {
         if (ltype == rtype)
             return (tree);
 
-        lsize = genprimsize(ltype);
-        rsize = genprimsize(rtype);
+        lsize = typesize(ltype, NULL);
+        rsize = typesize(rtype, NULL);
 
         if (lsize < rsize)
             return (mkastunary(A_WIDEN, rtype, tree, NULL, 0));
@@ -54,8 +54,12 @@ struct ASTnode *modify_type(struct ASTnode *tree, int rtype, int op) {
             return (NULL);
     }
 
-    if (ptrtype(ltype)) {
-        if (op == 0 && ltype == rtype)
+    if (ptrtype(ltype) && ptrtype(rtype)) {
+
+        if (op >= A_EQ && op <= A_GE)
+            return (tree);
+
+        if (op == 0 && (ltype == rtype || ltype == pointer_to(P_VOID)))
             return (tree);
     }
 
