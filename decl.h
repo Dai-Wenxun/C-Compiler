@@ -1,4 +1,5 @@
 // scan.c
+void dealing_minus(struct token *t);
 int scan(struct token *t);
 
 

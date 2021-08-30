@@ -204,13 +204,6 @@ static struct ASTnode *primary(void) {
     return (n);
 }
 
-static int binastop(int tokentype) {
-    if (tokentype > T_EOF && tokentype <= T_SLASH)
-        return (tokentype);
-    fatald("syntax error, token", tokentype);
-    return (0);
-}
-
 static int rightassoc(int tokentype) {
     if (tokentype == T_ASSIGN)
         return (1);
@@ -227,14 +220,17 @@ static int OpPrec[] = {
         110, 110                // T_STAR, T_SLASH
 };
 
-static int op_precedence(int tokentype) {
+static int op_precedence(struct token *t, int *tokentype) {
     int prec;
-    if (tokentype > T_SLASH)
-        fatald("token with no precedence in op_precedence", tokentype);
-    prec = OpPrec[tokentype];
-
-    if (prec == 0)
-        fatald("syntax error, token", tokentype);
+    if (t->token > T_SLASH || t->token == T_EOF) {
+        if (Token.token == T_INTLIT && Token.intvalue < 0) {
+            dealing_minus(t);
+            *tokentype = T_MINUS;
+            return (OpPrec[T_MINUS]);
+        }
+        fatals("binary operator required, got", t->tokptr);
+    }
+    prec = OpPrec[t->token];
 
     return (prec);
 }
@@ -316,8 +312,7 @@ struct ASTnode *prefix(void) {
 struct ASTnode *binexpr(int ptp) {
     struct ASTnode *left, *right;
     struct ASTnode *ltemp, *rtemp;
-    int ASTop;
-    int tokentype;
+    int tokentype, ASTop;
 
     left = prefix();
 
@@ -329,13 +324,13 @@ struct ASTnode *binexpr(int ptp) {
         return (left);
     }
 
-    while ((op_precedence(tokentype) > ptp) ||
-            (rightassoc(tokentype) && op_precedence(tokentype) == ptp)) {
+    while ((op_precedence(&Token, &tokentype) > ptp) ||
+            (rightassoc(tokentype) && op_precedence(&Token, &tokentype) == ptp)) {
 
         scan(&Token);
         right = binexpr(OpPrec[tokentype]);
 
-        ASTop = binastop(tokentype);
+        ASTop = tokentype;
 
         if (ASTop == A_ASSIGN) {
             right->rvalue = 1;

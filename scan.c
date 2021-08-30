@@ -202,8 +202,28 @@ char *Tstring[] = {
         ";", ",", ".", "->", ":"
 };
 
+static int minus_modify = 0;
+
+void dealing_minus(struct token *t) {
+    if (minus_modify == 0) {
+        t->token = T_MINUS;
+        t->intvalue = -t->intvalue;
+        t->tokptr = Tstring[t->token];
+        minus_modify = 1;
+    } else {
+        t->token = T_INTLIT;
+        t->tokptr = Tstring[t->token];
+        minus_modify = 0;
+    }
+}
+
 int scan(struct token *t) {
     int c, tokentype;
+
+    if (minus_modify) {
+        dealing_minus(t);
+        return (1);
+    }
 
     c = skip();
 
