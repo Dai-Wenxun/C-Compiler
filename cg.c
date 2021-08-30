@@ -581,7 +581,7 @@ int cgprimsize(int type) {
 }
 
 int cglign(int type, int offset, int direction) {
-    int alignment;
+    int alignment = 4;
 
     switch (type) {
         case P_CHAR:
@@ -590,10 +590,9 @@ int cglign(int type, int offset, int direction) {
         case P_LONG:
             break;
         default:
-            fatald("bad type in calc_aligned_offset()", type);
+            if (!ptrtype(type))
+                fatald("bad type in cglign()", type);
     }
-
-    alignment = 4;
 
     offset = (offset + direction * (alignment-1)) & ~(alignment-1);
     return (offset);

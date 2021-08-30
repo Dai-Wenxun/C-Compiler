@@ -390,7 +390,7 @@ static struct symtable *composite_declaration(int type) {
 
 static void enum_declaration(void) {
     struct symtable *etype = NULL;
-    char *name;
+    char *name = NULL;
     int intval = 0;
 
     // Skip the enum keyword
@@ -411,7 +411,8 @@ static void enum_declaration(void) {
     if (etype != NULL)
         fatals("enum type redeclared", name);
 
-    addenum(name, C_ENUMTYPE, 0);
+    if (name != NULL)
+        addenum(name, C_ENUMTYPE, 0);
 
     lbrace();
 
@@ -629,6 +630,6 @@ void global_declarations(void) {
     while (Token.token != T_EOF) {
         declaration_list(C_GLOBAL, T_SEMI, T_EOF, &unused);
         if (Token.token == T_SEMI)
-            scan(&Token);
+            semi();
     }
 }

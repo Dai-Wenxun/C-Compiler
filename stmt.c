@@ -140,8 +140,6 @@ static struct ASTnode *switch_statement(void) {
     while (inloop) {
         switch (Token.token) {
             case T_RBRACE:
-//                if (casecount == 0)
-//                    fatal("No cases in switch");
                 inloop = 0;
                 break;
             case T_CASE:
