@@ -355,7 +355,7 @@ static struct symtable *composite_declaration(int type) {
 
     m = ctype->member;
     m->posn = 0;
-    f_posn = 0;
+    f_posn = -1;
     offset = typesize(m->type, m->ctype);
 
     for (m = m->next; m != NULL; f_posn = m->posn, m = m->next) {
