@@ -284,6 +284,7 @@ static struct symtable *composite_declaration(int type) {
     struct ASTnode *unused;
     char *name;
     int t, offset;
+    int union_id = 0, f_posn;
 
     // Skip the struct/union keyword
     scan(&Token);
@@ -306,27 +307,47 @@ static struct symtable *composite_declaration(int type) {
     if (ctype != NULL)
         fatals("previously defined struct/union", Text);
 
-    if (type == P_STRUCT)
+    if (type == P_STRUCT) {
         ctype = addstruct(Text);
-    else
+    } else {
         ctype = addunion(Text);
+    }
 
     lbrace();
 
-    while (1) {
-        t = declaration_list(C_MEMBER, T_SEMI, T_RBRACE, &unused);
-        if (t == -1)
-            fatal("bad type in member list");
-        if (Token.token == T_SEMI)
+    while (Token.token != T_RBRACE) {
+        if (Token.token == T_UNION) {
+            scan(&Token);
+            lbrace();
+            while (Token.token != T_RBRACE) {
+                t = declaration_list(C_MEMBER, T_SEMI, T_RBRACE, &unused);
+                Membtail->posn = union_id++;
+                if (t == -1)
+                    fatal("bad type in member list");
+                if (Token.token == T_SEMI)
+                    semi();
+                if (Token.token == T_RBRACE)
+                    break;
+            }
+            rbrace();
             semi();
-        if (Token.token == T_RBRACE)
-            break;
+            union_id = 0;
+        } else {
+            t = declaration_list(C_MEMBER, T_SEMI, T_RBRACE, &unused);
+            if (t == -1)
+                fatal("bad type in member list");
+            if (Token.token == T_SEMI)
+                semi();
+            if (Token.token == T_RBRACE)
+                break;
+        }
+
     }
 
     rbrace();
 
     if (Membhead == NULL)
-        fatals("no members in struct", ctype->name);
+        fatals("no members in struct/union", ctype->name);
 
     ctype->member = Membhead;
 
@@ -334,12 +355,15 @@ static struct symtable *composite_declaration(int type) {
 
     m = ctype->member;
     m->posn = 0;
-
+    f_posn = 0;
     offset = typesize(m->type, m->ctype);
 
-    for (m = m->next; m != NULL; m = m->next) {
+    for (m = m->next; m != NULL; f_posn = m->posn, m = m->next) {
         if (type == P_STRUCT) {
-            m->posn = genalign(m->type, offset, 1);
+            if (m->posn > 0)
+                m->posn = f_posn;
+            else
+                m->posn = genalign(m->type, offset, 1);
             offset = m->posn + (typesize(m->type, m->ctype)>4 ? typesize(m->type, m->ctype) : 4);
         } else {
             m->posn = 0;
