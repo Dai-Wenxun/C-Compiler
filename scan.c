@@ -234,6 +234,8 @@ int scan(struct token *t) {
         case '+':
             if ((c=next()) == '+') {
                 t->token = T_INC;
+            } else if (c == '=') {
+                t->token = T_ASPLUS;
             } else {
                 putback(c);
                 t->token = T_PLUS;
@@ -248,16 +250,28 @@ int scan(struct token *t) {
                 t->intvalue = -scanint(c);
                 t->token = T_INTLIT;
                 break;
+            } else if (c == '=') {
+                t->token = T_ASMINUS;
             } else {
                 putback(c);
                 t->token = T_MINUS;
             }
             break;
         case '*':
-            t->token = T_STAR;
+            if ((c = next()) == '=') {
+                t->token = T_ASSTAR;
+            } else {
+                putback(c);
+                t->token = T_STAR;
+            }
             break;
         case '/':
-            t->token = T_SLASH;
+            if ((c = next()) == '=') {
+                t->token = T_ASSLASH;
+            } else {
+                putback(c);
+                t->token = T_SLASH;
+            }
             break;
         case ';':
             t->token = T_SEMI;

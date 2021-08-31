@@ -109,7 +109,7 @@ static int genSWITCH(struct ASTnode *n) {
 
 int genAST(struct ASTnode *n, int iflabel, int looptoplabel,
             int loopendlabel, int parentASTop) {
-    int leftreg, rightreg;
+    int leftreg, rightreg, asignreg;
 
     switch (n->op) {
         case A_IF:
@@ -140,6 +140,38 @@ int genAST(struct ASTnode *n, int iflabel, int looptoplabel,
 
     switch (n->op) {
         case A_ASSIGN:
+        case A_ASPLUS:
+        case A_ASMINUS:
+        case A_ASSTAR:
+        case A_ASSLASH:
+            if (n->right->op == A_DEREF)
+                 asignreg = cgderef(rightreg, n->right->type);
+            switch (n->op) {
+                case A_ASPLUS:
+                    if (n->right->op == A_DEREF)
+                        leftreg = cgadd(asignreg, leftreg);
+                    else
+                        leftreg = cgadd(rightreg, leftreg);
+                    break;
+                case A_ASMINUS:
+                    if (n->right->op == A_DEREF)
+                        leftreg = cgsub(asignreg, leftreg);
+                    else
+                        leftreg = cgsub(rightreg, leftreg);
+                    break;
+                case A_ASSTAR:
+                    if (n->right->op == A_DEREF)
+                        leftreg = cgmul(asignreg, leftreg);
+                    else
+                        leftreg = cgmul(rightreg, leftreg);
+                    break;
+                case A_ASSLASH:
+                    if (n->right->op == A_DEREF)
+                        leftreg = cgdiv(asignreg, leftreg);
+                    else
+                        leftreg = cgdiv(rightreg, leftreg);
+                    break;
+            }
             switch (n->right->op) {
                 case A_IDENT:
                     if (n->right->sym->class == C_GLOBAL)
@@ -185,7 +217,8 @@ int genAST(struct ASTnode *n, int iflabel, int looptoplabel,
         case A_STRLIT:
             return (cgloadglobstr(n->intvalue));
         case A_IDENT:
-            if (n->rvalue || parentASTop == A_DEREF) {
+            if (n->rvalue || parentASTop == A_DEREF
+                || (parentASTop >= A_ASPLUS && parentASTop <= A_ASSLASH)) {
                 if (n->sym->class == C_GLOBAL)
                     return (cgloadglob(n->sym, n->op));
                 else

@@ -478,21 +478,22 @@ int cgaddress(struct symtable *sym) {
 
 int cgderef(int r, int type) {
     int size = cgprimsize(type);
+    int outr = alloc_register();
 
     switch (size) {
         case 1:
-            fprintf(Outfile, "\tmovzbq\t(%s), %s\n", reglist[r], reglist[r]);
+            fprintf(Outfile, "\tmovsbq\t(%s), %s\n", reglist[r], reglist[outr]);
             break;
         case 4:
-            fprintf(Outfile, "\tmovl\t(%s), %s\n", reglist[r], dreglist[r]);
+            fprintf(Outfile, "\tmovslq\t(%s), %s\n", reglist[r], reglist[outr]);
             break;
         case 8:
-            fprintf(Outfile, "\tmovq\t(%s), %s\n", reglist[r], reglist[r]);
+            fprintf(Outfile, "\tmovq\t(%s), %s\n", reglist[r], reglist[outr]);
             break;
         default:
             fatald("bad type in cgderef()", type);
     }
-    return (r);
+    return (outr);
 }
 
 int cgwiden(int r, int oldtype, int newtype) {
