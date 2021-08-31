@@ -553,6 +553,8 @@ static struct symtable *function_declaration(int type, struct symtable *ctype) {
     }
     tree = mkastunary(A_FUNCTION, type, tree, oldfuncsym, endlabel);
 
+    tree = optimise(tree);
+
     genAST(tree, NOLABEL, NOLABEL, NOLABEL, 0);
     freeloclsyms();
     return (oldfuncsym);

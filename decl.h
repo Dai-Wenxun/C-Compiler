@@ -134,3 +134,6 @@ int pointer_to(int type);
 int value_at(int type);
 int typesize(int type, struct symtable *ctype);
 struct ASTnode *modify_type(struct ASTnode *tree, int rtype, int op);
+
+// opt.c
+struct ASTnode *optimise(struct ASTnode *n);
