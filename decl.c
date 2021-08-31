@@ -540,7 +540,7 @@ static struct symtable *function_declaration(int type, struct symtable *ctype) {
     Looplevel = Switchlevel = 0;
 
     lbrace();
-    tree = compound_statement(0);
+    tree = compound_statement(NO_SWITCH);
     rbrace();
 
     if (type != P_VOID) {

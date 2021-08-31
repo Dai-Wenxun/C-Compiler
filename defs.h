@@ -3,6 +3,12 @@
 #include <string.h>
 #include <ctype.h>
 
+enum {
+    NO_SWITCH = 1,
+    IN_SWITCH,
+    CBREAK,
+    CNBREAK
+};
 
 enum {
     TEXTLEN = 512,

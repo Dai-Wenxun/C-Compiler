@@ -166,7 +166,11 @@ static struct ASTnode *switch_statement(void) {
                 }
 
                 match(T_COLON, ":");
-                left = compound_statement(1);
+                Casebreak = CNBREAK;
+                left = compound_statement(IN_SWITCH);
+
+                if ((Casebreak == CNBREAK) && (ASTop == A_CASE))
+                    fprintf(stderr, "[Warning]: case '%d' with no break\n", casevalue);
 
                 if (casetree == NULL) {
                     casetree = casetail = mkastunary(ASTop, P_NONE, left, NULL, casevalue);
@@ -196,7 +200,7 @@ static struct ASTnode *single_statement(void) {
     switch (Token.token) {
         case T_LBRACE:
             lbrace();
-            stmt = compound_statement(0);
+            stmt = compound_statement(NO_SWITCH);
             rbrace();
             return (stmt);
 
@@ -242,18 +246,22 @@ struct ASTnode *compound_statement(int inswitch) {
     struct ASTnode *tree;
 
     while (1) {
+        if (Token.token == T_RBRACE)
+            return (left);
+        if ((inswitch == IN_SWITCH) && (Token.token == T_CASE || Token.token == T_DEFAULT))
+            return (left);
+
         tree = single_statement();
 
         if (tree != NULL) {
+            if ((inswitch == IN_SWITCH) && tree->op == A_BREAK)
+                Casebreak = CBREAK;
+
             if (left == NULL)
                 left = tree;
             else
                 left = mkastnode(A_GLUE, P_NONE, left, NULL, tree, NULL, 0);
         }
 
-        if (Token.token == T_RBRACE)
-            return (left);
-        if (inswitch && (Token.token == T_CASE || Token.token == T_DEFAULT))
-            return (left);
     }
 }

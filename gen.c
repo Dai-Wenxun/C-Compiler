@@ -97,8 +97,10 @@ static int genSWITCH(struct ASTnode *n) {
         if (c->op == A_DEFAULT)
             defaultlabel = caselabel[i];
 
-        genAST(c->left, NOLABEL, NOLABEL, Lend, 0);
-        genfreeregs();
+        if (c->left != NULL) {
+            genAST(c->left, NOLABEL, NOLABEL, Lend, 0);
+            genfreeregs();
+        }
     }
 
     cgjump(Lend);
@@ -121,14 +123,18 @@ int genAST(struct ASTnode *n, int iflabel, int looptoplabel,
         case A_FUNCCALL:
             return (gen_funccall(n));
         case A_GLUE:
-            if (n->left != NULL) genAST(n->left, NOLABEL, looptoplabel, loopendlabel,n->op);
-            genfreeregs();
-            if (n->right != NULL) genAST(n->right, NOLABEL, looptoplabel, loopendlabel, n->op);
-            genfreeregs();
+            if (n->left != NULL) {
+                genAST(n->left, NOLABEL, looptoplabel, loopendlabel,n->op);
+                genfreeregs();
+            }
+            if (n->right != NULL) {
+                genAST(n->right, NOLABEL, looptoplabel, loopendlabel, n->op);
+                genfreeregs();
+            }
             return (NOREG);
         case A_FUNCTION:
             cgfuncpreamble(n->sym);
-            genAST(n->left, NOLABEL, NOLABEL, NOLABEL, n->op);
+            if (n->left != NULL) genAST(n->left, NOLABEL, NOLABEL, NOLABEL, n->op);
             cgfuncpostamble(n->sym);
             return (NOREG);
     }
