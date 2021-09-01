@@ -92,34 +92,29 @@ int parse_cast(void) {
 }
 
 int parse_literal(int type) {
-    struct symtable *etype;
+    struct ASTnode *tree;
 
-    if (Token.token == T_STRLIT) {
-        if ((type == pointer_to(P_CHAR) || type == P_NONE))
-            return (genglobstr(Text));
+    tree = optimise(binexpr(0));
+
+    if (tree->op == A_CAST) {
+        tree->left->type = tree->type;
+        tree = tree->left;
+    }
+    if (tree->op != A_INTLIT && tree->op != A_STRLIT)
+        fatal("Cannot initialise globals with a general expression");
+
+    if (type == pointer_to(P_CHAR)) {
+        if (tree->op == A_STRLIT)
+            return (tree->intvalue);
+        if (tree->op == A_INTLIT && tree->intvalue == 0)
+            return (0);
     }
 
-    if ((Token.token == T_IDENT) && ((etype = findenumval(Text)) != NULL)) {
-        Token.token = T_INTLIT;
-        Token.intvalue = etype->posn;
-    }
+    if (inttype(type) && typesize(type, NULL) >= typesize(tree->type, NULL))
+        return (tree->intvalue);
 
-    if (Token.token == T_INTLIT) {
-        switch (type) {
-            case P_CHAR:
-                if (Token.intvalue < -128 || Token.intvalue > 255)
-                    warn("overflow in implicit constant conversion");
-            case P_NONE:
-            case P_INT:
-            case P_LONG:
-                break;
-            default:
-                fatal("type mismatch: integer literal vs. variable");
-        }
-    } else
-        fatal("initializer element is not constant");
-
-    return (Token.intvalue);
+    fatal("type mismatch");
+    return (0);
 }
 
 static struct symtable *scalar_declaration(char *varname, int type,
@@ -127,7 +122,6 @@ static struct symtable *scalar_declaration(char *varname, int type,
                                 struct ASTnode **tree) {
     struct symtable *sym = NULL;
     struct ASTnode *varnode, *exprnode;
-    int casttype;
 
     switch (class) {
         case C_GLOBAL:
@@ -151,19 +145,8 @@ static struct symtable *scalar_declaration(char *varname, int type,
         scan(&Token);
 
         if (class == C_GLOBAL) {
-            if (Token.token == T_LPAREN) {
-                scan(&Token);
-                casttype = parse_cast();
-                rparen();
-
-                if (casttype == type || (casttype== pointer_to(P_VOID) && ptrtype(type)))
-                    type = P_NONE;
-                else
-                    fatal("type mismatch");
-            }
             sym->initlist =(int *)malloc(sizeof(int));
             sym->initlist[0] = parse_literal(type);
-            scan(&Token);
         } else {
             varnode = mkastleaf(A_IDENT, type, sym, 0);
             exprnode = binexpr(0);
@@ -200,11 +183,10 @@ static struct symtable *array_declaration(char *varname, int type,
 
     scan(&Token);
 
-    if (Token.token == T_INTLIT) {
-        if (Token.intvalue <= 0)
-            fatald("array size is illegal", Token.intvalue);
-        sym->nelems = Token.intvalue;
-        scan(&Token);
+    if (Token.token != T_RBRACKET) {
+        sym->nelems = parse_literal(type);
+        if (sym->nelems <= 0)
+            fatald("array size is illegal", sym->nelems);
     }
 
     match(T_RBRACKET, "]");
@@ -237,7 +219,6 @@ static struct symtable *array_declaration(char *varname, int type,
                     fatal("type mismatch");
             }
             sym->initlist[i++] = parse_literal(type);
-            scan(&Token);
 
             if (sym->nelems == 0 && i == maxelems) {
                 maxelems += INCREMENT;
