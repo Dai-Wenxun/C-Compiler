@@ -462,6 +462,14 @@ static int param_declaration_list(struct symtable *oldfuncsym) {
         protoptr = oldfuncsym->member;
 
     while (Token.token != T_RPAREN) {
+        if (Token.token == T_VOID) {
+            scan(&Peektoken);
+
+            if (Peektoken.token == T_RPAREN) {
+                scan(&Token);
+                break;
+            }
+        }
         type = declaration_list(C_PARAM, T_COMMA, T_RPAREN, &unused);
         if (type == -1)
             fatal("bad type in param list");

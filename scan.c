@@ -42,8 +42,27 @@ static int skip(void) {
     return (c);
 }
 
+static int hexchar(void) {
+    int c, h, n = 0, f = 0;
+
+    while (isxdigit(c = next())) {
+        h = chrpos("0123456789abcdef", tolower(c));
+
+        n = n * 16 + h;
+
+        f = 1;
+    }
+    putback(c);
+
+    if (!f)
+        fatal("missing digits after '\\x'");
+    if (n > 255)
+        fatal("value out of range after '\\x'");
+    return n;
+}
+
 static int scanch(void) {
-    int c;
+    int i, c, c2;
 
     c = next();
     if (c == '\\') {
@@ -62,14 +81,29 @@ static int scanch(void) {
                 return '\t';
             case 'v':
                 return '\v';
-            case '0':
-                return '\0';
             case '\\':
                 return '\\';
             case '\"':
                 return '\"';
             case '\'':
                 return '\'';
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+                for (i = c2 = 0; isdigit(c) && c < '8'; c = next()) {
+                    if (++i > 3)
+                        break;
+                    c2 = c2 * 8 + (c - '0');
+                }
+                putback(c);
+                return (c2);
+            case 'x':
+                return hexchar();
             default:
                 fatalc("unknown escape sequence", c);
         }
@@ -78,10 +112,22 @@ static int scanch(void) {
 }
 
 static int scanint(int c) {
-    int k, val = 0;
+    int k, val = 0, radix = 10;
 
-    while ((k = chrpos("0123456789", c)) >= 0) {
-        val = 10 * val + k;
+    if (c == '0') {
+        c = next();
+        if (c == 'x') {
+            radix = 16;
+            c =  next();
+        } else {
+            radix = 8;
+        }
+    }
+
+    while ((k = chrpos("0123456789abcdef", tolower(c))) >= 0) {
+        if (k >= radix)
+            fatalc("invalid digit in integer literal", c);
+        val = radix * val + k;
         c = next();
     }
 
@@ -226,6 +272,13 @@ int scan(struct token *t) {
         return (1);
     }
 
+    if (Peektoken.token != 0) {
+        t->token = Peektoken.token;
+        t->intvalue = Peektoken.intvalue;
+        t->tokptr = Peektoken.tokptr;
+        Peektoken.token = 0;
+        return (1);
+    }
     c = skip();
 
     switch (c) {

@@ -61,30 +61,32 @@ static void free_register(int r) {
 
 void cgpreamble(void) {
     freeall_registers();
-    cgtextseg();
 
-    fprintf(Outfile,
-           "switch:\n"
-           "    pushq   %%rsi\n"
-           "    movq    %%rdx, %%rsi\n"   //%%rsi = switch table address
-           "    movq    %%rax, %%rbx\n"   //%%rbx = expression value
-           "    cld\n"
-           "    lodsq\n"               //Load qword at address (R)SI into RAX
-           "    movq    %%rax, %%rcx\n"
-           "next:\n"
-           "    lodsq\n"
-           "    movq    %%rax, %%rdx\n"
-           "    lodsq\n"
-           "    cmpq    %%rdx, %%rbx\n"
-           "    jnz     no\n"
-           "    popq    %%rsi\n"
-           "    jmp *%%rax\n"
-           "no:\n"
-           "    loop    next\n"
-           "    lodsq\n"
-           "    popq    %%rsi\n"
-           "    jmp *%%rax\n"
-           );
+    if (Switchexist) {
+        cgtextseg();
+        fprintf(Outfile,
+                "switch:\n"
+                "    pushq   %%rsi\n"
+                "    movq    %%rdx, %%rsi\n"   //%%rsi = switch table address
+                "    movq    %%rax, %%rbx\n"   //%%rbx = expression value
+                "    cld\n"
+                "    lodsq\n"               //Load qword at address (R)SI into RAX
+                "    movq    %%rax, %%rcx\n"
+                "next:\n"
+                "    lodsq\n"
+                "    movq    %%rax, %%rdx\n"
+                "    lodsq\n"
+                "    cmpq    %%rdx, %%rbx\n"
+                "    jnz     no\n"
+                "    popq    %%rsi\n"
+                "    jmp *%%rax\n"
+                "no:\n"
+                "    loop    next\n"
+                "    lodsq\n"
+                "    popq    %%rsi\n"
+                "    jmp *%%rax\n"
+        );
+    }
 }
 
 void cgpostamble(void) {

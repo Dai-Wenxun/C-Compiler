@@ -190,6 +190,7 @@ static struct ASTnode *switch_statement(void) {
     root->right = casetree;
 
     rbrace();
+    Switchexist = 1;
 
     return (root);
 }
