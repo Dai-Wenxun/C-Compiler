@@ -8,7 +8,6 @@
 static void init() {
     Line = 1;
     Putback = '\n';
-    addglob("printf", P_INT, NULL, S_FUNCTION, C_GLOBAL, 0, 0);
 }
 
 char *alter_suffix(char *str, char suffix) {
