@@ -26,6 +26,7 @@ enum {
 enum {
     C_GLOBAL = 1,
     C_EXTERN,
+    C_STATIC,
     C_LOCAL,
     C_PARAM,
     C_STRUCT,
@@ -59,7 +60,7 @@ enum {
   // Other keywords
   T_IF, T_ELSE, T_WHILE, T_FOR, T_RETURN,
   T_TYPEDEF, T_EXTERN, T_BREAK, T_CONTINUE,
-  T_SWITCH, T_CASE, T_DEFAULT, T_SIZEOF,
+  T_SWITCH, T_CASE, T_DEFAULT, T_SIZEOF, T_STATIC,
 
   // Structural tokens
   T_INTLIT, T_STRLIT, T_IDENT,

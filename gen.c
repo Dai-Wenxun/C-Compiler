@@ -2,9 +2,9 @@
 #include "data.h"
 #include "decl.h"
 
+static int labelid = 1;
 int genlabel(void) {
-    static int id = 1;
-    return (id++);
+    return (labelid++);
 }
 
 static int genIF(struct ASTnode *n, int looptoplabel, int loopendlabel) {
@@ -180,7 +180,7 @@ int genAST(struct ASTnode *n, int iflabel, int looptoplabel,
             }
             switch (n->right->op) {
                 case A_IDENT:
-                    if (n->right->sym->class == C_GLOBAL)
+                    if (n->right->sym->class == C_GLOBAL || n->right->sym->class == C_STATIC)
                         return (cgstorglob(leftreg, n->right->sym));
                     else
                         return (cgstorlocal(leftreg, n->right->sym));
@@ -225,7 +225,7 @@ int genAST(struct ASTnode *n, int iflabel, int looptoplabel,
         case A_IDENT:
             if (n->rvalue || parentASTop == A_DEREF
                 || (parentASTop >= A_ASPLUS && parentASTop <= A_ASSLASH)) {
-                if (n->sym->class == C_GLOBAL)
+                if (n->sym->class == C_GLOBAL || n->sym->class == C_STATIC)
                     return (cgloadglob(n->sym, n->op));
                 else
                     return (cgloadlocal(n->sym, n->op));
@@ -235,7 +235,7 @@ int genAST(struct ASTnode *n, int iflabel, int looptoplabel,
         case A_PREDEC:
         case A_POSTINC:
         case A_POSTDEC:
-            if (n->sym->class == C_GLOBAL)
+            if (n->sym->class == C_GLOBAL || n->sym->class == C_STATIC)
                 return (cgloadglob(n->sym, n->op));
             else
                 return (cgloadlocal(n->sym, n->op));
