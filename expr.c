@@ -152,6 +152,8 @@ static struct ASTnode *primary(void) {
     struct ASTnode *n;
     int label;
     int type = 0;
+    int size, class = 0;
+    struct symtable *ctype;
 
     switch (Token.token) {
         case T_INTLIT:
@@ -196,6 +198,17 @@ static struct ASTnode *primary(void) {
                 n = mkastunary(A_CAST, type, n, NULL, 0);
 
             return (n);
+
+        case T_SIZEOF:
+            scan(&Token);
+            lparen();
+
+            type = parse_stars(parse_type(&ctype, &class));
+
+            size = typesize(type, ctype);
+
+            n = mkastleaf(A_INTLIT, P_INT, NULL, size);
+            break;
 
         default:
             fatals("primary expression expected, got token", Token.tokptr);
