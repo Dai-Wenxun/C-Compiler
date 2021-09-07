@@ -56,6 +56,7 @@ static char *do_compile(char *filename) {
     global_declarations();
     genpostamble();
     fclose(Outfile);
+    freestaticsyms();
     return (Outfilename);
 }
 

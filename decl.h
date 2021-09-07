@@ -117,6 +117,7 @@ struct symtable *findenumval(char *s);
 struct symtable *findtypedef(char *s);
 void clear_symtable(void);
 void freeloclsyms(void);
+void freestaticsyms(void);
 
 
 // decl.c

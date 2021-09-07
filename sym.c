@@ -175,3 +175,30 @@ void freeloclsyms(void) {
     Loclhead = Locltail = NULL;
     Functionid = NULL;
 }
+
+void freestaticsyms(void) {
+    struct symtable *g;
+
+    if (Globhead == NULL)
+        return;
+
+    g = ((struct symtable *)malloc(sizeof(struct symtable)));
+    g->next = Globhead;
+
+    while (g->next != NULL) {
+        if (g->next->class == C_STATIC) {
+            if (g->next == Globhead) {
+                Globhead = Globhead->next;
+            }
+            g->next = g->next->next;
+
+            if (g->next == NULL) {
+                Globtail = g;
+            }
+        } else {
+            g = g->next;
+        }
+
+    }
+
+}

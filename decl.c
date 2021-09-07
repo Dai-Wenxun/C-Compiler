@@ -506,7 +506,7 @@ static int param_declaration_list(struct symtable *oldfuncsym) {
     return (paramcnt);
 }
 
-static struct symtable *function_declaration(int type, struct symtable *ctype) {
+static struct symtable *function_declaration(int type, struct symtable *ctype, int class) {
     struct ASTnode *tree = NULL, *finalstmt;
     struct symtable *oldfuncsym, *newfuncsym = NULL;
     int endlabel, paramcnt;
@@ -517,7 +517,7 @@ static struct symtable *function_declaration(int type, struct symtable *ctype) {
 
     if (oldfuncsym == NULL) {
         endlabel = genlabel();
-        newfuncsym = addglob(Text, type, ctype, S_FUNCTION, C_GLOBAL, 0, endlabel);
+        newfuncsym = addglob(Text, type, ctype, S_FUNCTION, class, 0, endlabel);
     }
 
     lparen();
@@ -569,7 +569,7 @@ static struct symtable *symbol_declaration(int type, struct symtable *ctype,
     if (Token.token == T_LPAREN) {
         if (class != C_GLOBAL && class != C_STATIC)
             fatal("function declaration or definition not at global level");
-        return (function_declaration(type, ctype));
+        return (function_declaration(type, ctype, class));
     }
 
     switch (class) {
