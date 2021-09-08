@@ -429,6 +429,9 @@ int scan(struct token *t) {
             scanstr();
             t->token = T_STRLIT;
             break;
+        case '?':
+            t->token = T_QUESTION;
+            break;
         default:
             if (isdigit(c)) {
                 t->intvalue = scanint(c);

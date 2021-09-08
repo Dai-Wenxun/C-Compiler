@@ -42,6 +42,7 @@ enum {
 
   // Binary operators
   T_ASSIGN, T_ASPLUS, T_ASMINUS, T_ASSTAR, T_ASSLASH,
+  T_QUESTION,
   T_LOGOR, T_LOGAND,
   T_OR, T_XOR, T_AMPER,
   T_EQ, T_NE,
@@ -70,7 +71,7 @@ enum {
 
 enum {
     A_ASSIGN=1, A_ASPLUS, A_ASMINUS, A_ASSTAR, A_ASSLASH,
-    A_LOGOR, A_LOGAND, A_OR, A_XOR, A_AND,   //6
+    A_TERNARY, A_LOGOR, A_LOGAND, A_OR, A_XOR, A_AND,   //6
     A_EQ, A_NE, A_LT, A_GT, A_LE, A_GE, A_LSHIFT, A_RSHIFT,  //14
     A_ADD, A_SUBTRACT, A_MULTIPLY, A_DIVIDE,      //18
     A_PREINC, A_PREDEC, A_POSTINC, A_POSTDEC,       //22

@@ -37,11 +37,15 @@ static char *dreglist[] =
 static char *breglist[] =
     { "%r10b", "%r11b", "%r12b", "%r13b", "%r9b", "%r8b", "%cl", "%dl", "%sil", "%dil" };
 
-void freeall_registers(void) {
-    freereg[0] = freereg[1] = freereg[2] = freereg[3] = 1;
+void freeall_registers(int keepreg) {
+    int i;
+    for (i = 0; i < 4; ++i) {
+        if (i != keepreg)
+            freereg[i] = 1;
+    }
 }
 
-static int alloc_register(void) {
+int alloc_register(void) {
     for (int i = 0; i < 4; i++) {
         if (freereg[i]) {
             freereg[i] = 0;
@@ -60,7 +64,7 @@ static void free_register(int r) {
 }
 
 void cgpreamble(void) {
-    freeall_registers();
+    freeall_registers(-1);
 
     if (Switchexist) {
         cgtextseg();
@@ -226,7 +230,7 @@ int cgcompare_and_jump(int ASTop, int r1, int r2, int label) {
 
     fprintf(Outfile, "\tcmpq\t%s, %s\n", reglist[r2], reglist[r1]);
     fprintf(Outfile, "\t%s\tL%d\n", invcmplist[ASTop - A_EQ], label);
-    freeall_registers();
+    freeall_registers(-1);
     return (NOREG);
 }
 
@@ -420,7 +424,7 @@ int cglognot(int r) {
 
 int cgboolean(int r, int op, int label) {
     fprintf(Outfile, "\ttest\t%s, %s\n", reglist[r], reglist[r]);
-    if (op == A_IF || op == A_WHILE)
+    if (op == A_IF || op == A_WHILE || op == A_TERNARY)
         fprintf(Outfile, "\tjz\tL%d\n", label);
     else {
         fprintf(Outfile, "\tsetnz\t%s\n", breglist[r]);
@@ -607,6 +611,10 @@ void cglabel(int l) {
 
 void cgjump(int l) {
     fprintf(Outfile, "\tjmp\tL%d\n", l);
+}
+
+void cgmove(int r1, int r2) {
+    fprintf(Outfile, "\tmovq\t%s, %s\n", reglist[r1], reglist[r2]);
 }
 
 void cgswitch(int reg, int casecount, int toplabel,

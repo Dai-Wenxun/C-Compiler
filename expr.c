@@ -225,7 +225,7 @@ static int rightassoc(int tokentype) {
 
 static int OpPrec[] = {
         0, 10, 10, 10, 10, 10,         // T_EOF, T_ASSIGN~
-        20, 30,                         //  T_LOGOR, T_LOGAND
+        15, 20, 30,                     // T_QUESTION, T_LOGOR, T_LOGAND
         40, 50, 60,                      // T_OR, T_XOR, T_AMPER
         70, 70,                           // T_EQ, T_NE
         80, 80, 80, 80,                    // T_LT, T_GT, T_LE, T_GE
@@ -328,7 +328,7 @@ struct ASTnode *prefix(void) {
 struct ASTnode *binexpr(int ptp) {
     struct ASTnode *left, *right;
     struct ASTnode *ltemp, *rtemp;
-    int tokentype, ASTop;
+    int tokentype, ASTop, oprec;
 
     left = prefix();
 
@@ -343,32 +343,48 @@ struct ASTnode *binexpr(int ptp) {
     while ((op_precedence(&Token, &tokentype) > ptp) ||
             (rightassoc(tokentype) && op_precedence(&Token, &tokentype) == ptp)) {
 
+        oprec = OpPrec[tokentype];
+        if (Token.token == T_QUESTION)
+            oprec = 0;
         scan(&Token);
-        right = binexpr(OpPrec[tokentype]);
+        right = binexpr(oprec);
 
         ASTop = tokentype;
+        switch (ASTop) {
+            case A_ASPLUS:
+            case A_ASMINUS:
+            case A_ASSTAR:
+            case A_ASSLASH:
+            case A_ASSIGN:
+                right->rvalue = 1;
+                right = modify_type(right, left->type, 0);
+                if (right == NULL)
+                    fatal("incompatible type in assignment");
 
-        if (ASTop >= A_ASSIGN && ASTop <= A_ASSLASH) {
-            right->rvalue = 1;
-            right = modify_type(right, left->type, 0);
-            if (right == NULL)
-                fatal("incompatible type in assignment");
+                ltemp = left;
+                left = right;
+                right = ltemp;
+                break;
+            case A_TERNARY:
+                match(T_COLON, ":");
+                ltemp = binexpr(0);
 
-            ltemp = left;
-            left = right;
-            right = ltemp;
+                if (left->op < A_EQ || left->op > A_GE)
+                    left = mkastunary(A_TOBOOL, left->type, left, NULL, 0);
 
-        } else {
-            left->rvalue = 1;
-            right->rvalue = 1;
-            ltemp = modify_type(left, right->type, ASTop);
-            rtemp = modify_type(right, left->type, ASTop);
-            if (ltemp == NULL && rtemp == NULL)
-                fatal("incompatible types in binary expression");
-            if (ltemp != NULL)
-                left = ltemp;
-            if (rtemp != NULL)
-                right = rtemp;
+                return (mkastnode(A_TERNARY, right->type, left, right, ltemp, NULL, 0));
+
+            default:
+                left->rvalue = 1;
+                right->rvalue = 1;
+                ltemp = modify_type(left, right->type, ASTop);
+                rtemp = modify_type(right, left->type, ASTop);
+                if (ltemp == NULL && rtemp == NULL)
+                    fatal("incompatible types in binary expression");
+                if (ltemp != NULL)
+                    left = ltemp;
+                if (rtemp != NULL)
+                    right = rtemp;
         }
 
         left = mkastnode(ASTop, left->type, left, NULL, right, NULL, 0);

@@ -18,7 +18,7 @@ int genAST(struct ASTnode *n, int iflabel, int looptoplabel,
             int loopendlabel, int parentASTop);
 void genpreamble(void);
 void genpostamble(void);
-void genfreeregs(void);
+void genfreeregs(int keepreg);
 void genglobsym(struct symtable *sym);
 int genglobstr(char *strvalue);
 int genprimsize(int type);
@@ -28,7 +28,8 @@ int genalign(int type, int offset, int direction);
 // cg.c
 void cgtextseg(void);
 void cgdataseg(void);
-void freeall_registers(void);
+void freeall_registers(int keepreg);
+int alloc_register(void);
 void cgpreamble(void);
 void cgpostamble(void);
 void cgfuncpreamble(struct symtable *sym);
@@ -68,6 +69,7 @@ int cgprimsize(int type);
 int cglign(int type, int offset, int direction);
 void cglabel(int l);
 void cgjump(int l);
+void cgmove(int r1, int r2);
 void cgswitch(int reg, int casecount, int toplabel,
               int *caselabel, int *caseval, int defaultlabel);
 

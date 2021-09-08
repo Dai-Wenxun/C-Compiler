@@ -15,10 +15,10 @@ static int genIF(struct ASTnode *n, int looptoplabel, int loopendlabel) {
         Lend = genlabel();
 
     genAST(n->left, Lfalse, NOLABEL, NOLABEL, n->op);
-    genfreeregs();
+    genfreeregs(-1);
 
     genAST(n->mid, NOLABEL, looptoplabel, loopendlabel, n->op);
-    genfreeregs();
+    genfreeregs(-1);
 
     if (n->right)
         cgjump(Lend);
@@ -27,7 +27,7 @@ static int genIF(struct ASTnode *n, int looptoplabel, int loopendlabel) {
 
     if (n->right) {
         genAST(n->right, NOLABEL, looptoplabel, loopendlabel, n->op);
-        genfreeregs();
+        genfreeregs(-1);
         cglabel(Lend);
     }
 
@@ -43,10 +43,10 @@ static int genWHILE(struct ASTnode *n) {
     cglabel(Lstart);
 
     genAST(n->left, Lend, NOLABEL, NOLABEL, n->op);
-    genfreeregs();
+    genfreeregs(-1);
 
     genAST(n->right, NOLABEL, Lstart, Lend, n->op);
-    genfreeregs();
+    genfreeregs(-1);
 
     cgjump(Lstart);
     cglabel(Lend);
@@ -54,7 +54,7 @@ static int genWHILE(struct ASTnode *n) {
     return (NOREG);
 }
 
-static int gen_funccall(struct ASTnode *n) {
+static int genFunccall(struct ASTnode *n) {
     struct ASTnode *gluetree = n->left;
     int reg;
     int numargs = 0;
@@ -66,7 +66,7 @@ static int gen_funccall(struct ASTnode *n) {
 
         if (numargs == 0)
             numargs = gluetree->size;
-        genfreeregs();
+        genfreeregs(-1);
         gluetree = gluetree->left;
     }
 
@@ -88,7 +88,7 @@ static int genSWITCH(struct ASTnode *n) {
 
     reg = genAST(n->left, NOLABEL, NOLABEL, NOLABEL, 0);
     cgjump(Ljumptop);
-    genfreeregs();
+    genfreeregs(-1);
 
     for (i = 0, c = n->right; c != NULL; i++, c = c->right) {
         caselabel[i] = genlabel();
@@ -99,7 +99,7 @@ static int genSWITCH(struct ASTnode *n) {
 
         if (c->left != NULL) {
             genAST(c->left, NOLABEL, NOLABEL, Lend, 0);
-            genfreeregs();
+            genfreeregs(-1);
         }
     }
 
@@ -107,6 +107,33 @@ static int genSWITCH(struct ASTnode *n) {
     cgswitch(reg, n->intvalue, Ljumptop, caselabel, caseval, defaultlabel);
     cglabel(Lend);
     return (NOREG);
+}
+
+static int genTernary(struct ASTnode *n) {
+    int Lfasle, Lend;
+    int expreg, reg;
+
+    Lfasle = genlabel();
+    Lend = genlabel();
+
+
+    genAST(n->left, Lfasle, NOLABEL, NOLABEL, n->op);
+    genfreeregs(-1);
+
+    reg = alloc_register();
+
+    expreg = genAST(n->mid, NOLABEL, NOLABEL, NOLABEL, 0);
+    cgmove(expreg, reg);
+    genfreeregs(reg);
+
+    cgjump(Lend);
+    cglabel(Lfasle);
+    expreg = genAST(n->right, NOLABEL, NOLABEL, NOLABEL, 0);
+    cgmove(expreg, reg);
+    genfreeregs(reg);
+    cglabel(Lend);
+
+    return (reg);
 }
 
 int genAST(struct ASTnode *n, int iflabel, int looptoplabel,
@@ -121,15 +148,17 @@ int genAST(struct ASTnode *n, int iflabel, int looptoplabel,
         case A_SWITCH:
             return (genSWITCH(n));
         case A_FUNCCALL:
-            return (gen_funccall(n));
+            return (genFunccall(n));
+        case A_TERNARY:
+            return (genTernary(n));
         case A_GLUE:
             if (n->left != NULL) {
                 genAST(n->left, NOLABEL, looptoplabel, loopendlabel,n->op);
-                genfreeregs();
+                genfreeregs(-1);
             }
             if (n->right != NULL) {
                 genAST(n->right, NOLABEL, looptoplabel, loopendlabel, n->op);
-                genfreeregs();
+                genfreeregs(-1);
             }
             return (NOREG);
         case A_FUNCTION:
@@ -202,7 +231,8 @@ int genAST(struct ASTnode *n, int iflabel, int looptoplabel,
         case A_GT:
         case A_LE:
         case A_GE:
-            if (parentASTop == A_IF || parentASTop == A_WHILE)
+            if (parentASTop == A_IF || parentASTop == A_WHILE ||
+                parentASTop == A_TERNARY)
                 return (cgcompare_and_jump(n->op, leftreg, rightreg, iflabel));
             else
                 return (cgcompare_and_set(n->op, leftreg, rightreg));
@@ -289,8 +319,8 @@ void genpostamble(void) {
     cgpostamble();
 }
 
-void genfreeregs(void) {
-    freeall_registers();
+void genfreeregs(int keepreg) {
+    freeall_registers(keepreg);
 }
 
 void genglobsym(struct symtable *sym) {
